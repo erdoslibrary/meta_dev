@@ -1,0 +1,64 @@
+{
+  "run_id": "r07",
+  "persona": {
+    "age": 54,
+    "job": "약사",
+    "vocab": "중",
+    "thinking": "문자 그대로 읽음"
+  },
+  "puzzle_set_id": "sample-set",
+  "model": "muse-spark-1.3",
+  "events": [
+    {
+      "t": 1,
+      "puzzle": 2,
+      "type": "npc_dialogue",
+      "npc": "librarian"
+    },
+    {
+      "t": 2,
+      "puzzle": 2,
+      "type": "answer_submitted",
+      "value": "apple",
+      "attempt": 1,
+      "correct": false,
+      "reason": "그림에 빨간 과일이 있어서"
+    },
+    {
+      "t": 3,
+      "puzzle": 2,
+      "type": "hint_revealed",
+      "level": 1
+    },
+    {
+      "t": 4,
+      "puzzle": 2,
+      "type": "answer_submitted",
+      "value": "pear",
+      "attempt": 2,
+      "correct": false,
+      "reason": "과일 이름 중 짧은 것부터 시도"
+    },
+    {
+      "t": 5,
+      "puzzle": 2,
+      "type": "answer_submitted",
+      "value": "pineapple",
+      "attempt": 3,
+      "correct": true,
+      "reason": "힌트의 '소나무'를 보고 pine을 붙임"
+    },
+    {
+      "t": 6,
+      "puzzle": 2,
+      "type": "puzzle_ended",
+      "result": "solved_with_hint"
+    },
+    {
+      "t": 7,
+      "puzzle": 2,
+      "type": "end",
+      "outcome": "completed"
+    }
+  ]
+}

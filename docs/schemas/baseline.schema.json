@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://realtosim.invalid/schemas/baseline.schema.json",
+  "title": "Offline baseline",
+  "description": "오프라인 플레이의 관찰 메모. 원본이 메모뿐이므로 점수나 비율 필드를 두지 않으며, 보고서의 사례 확인(spec §10-4)에만 쓴다.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["baseline_id", "puzzle_set_id", "source", "observations"],
+  "properties": {
+    "baseline_id": { "type": "string", "minLength": 1 },
+    "puzzle_set_id": { "type": "string", "minLength": 1 },
+    "source": {
+      "description": "기록의 출처. 예: 42경산 오프라인 플레이",
+      "type": "string",
+      "minLength": 1
+    },
+    "participants_note": {
+      "description": "참가자에 대한 메모 (선택).",
+      "type": "string",
+      "minLength": 1
+    },
+    "observations": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/observation" }
+    }
+  },
+  "$defs": {
+    "observation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["puzzle", "observed", "note"],
+      "properties": {
+        "puzzle": {
+          "description": "puzzle.number.",
+          "type": "integer",
+          "minimum": 1
+        },
+        "observed": {
+          "description": "사람들이 막혔는지(stuck), 수월하게 풀었는지(smooth).",
+          "enum": ["stuck", "smooth"]
+        },
+        "note": {
+          "description": "메모 원문.",
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  }
+}

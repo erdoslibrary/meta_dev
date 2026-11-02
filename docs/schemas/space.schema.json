@@ -1,0 +1,163 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://realtosim.invalid/schemas/space.schema.json",
+  "title": "Space",
+  "description": "재연한 공간: 층별 평면도와 사물 목록 (spec §5). 벽 닫힘, 사물 겹침, 크기 범위 같은 의미 검사는 검증기 코드가 맡는다.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["space_id", "floors", "objects"],
+  "properties": {
+    "space_id": {
+      "description": "공간 식별자. puzzle.space_id가 이 값을 가리킨다.",
+      "type": "string",
+      "minLength": 1
+    },
+    "floors": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/floor" }
+    },
+    "rooms": {
+      "description": "방 이름 목록 (선택). 지도에 표시하고 에이전트에게도 공개한다. 격자 안에 있는지, 서로 겹치지 않는지는 검증기가 확인한다.",
+      "type": "array",
+      "items": { "$ref": "#/$defs/room" }
+    },
+    "objects": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/object" }
+    }
+  },
+  "$defs": {
+    "cellRef": {
+      "description": "한 칸의 좌표. 체스식으로 왼쪽 아래가 A1이고, 층이 여러 개면 접두어를 붙인다. 예: C4, AA12, 2F-C4",
+      "type": "string",
+      "pattern": "^(?:[1-9][0-9]*F-)?[A-Z]+[1-9][0-9]*$"
+    },
+    "cellRange": {
+      "description": "한 칸 또는 범위. 예: C4, B3:D5, 2F-C4:D4",
+      "type": "string",
+      "pattern": "^(?:[1-9][0-9]*F-)?[A-Z]+[1-9][0-9]*(?::[A-Z]+[1-9][0-9]*)?$"
+    },
+    "objectId": {
+      "description": "라벨@시작 칸. 같은 사물은 좌표로 구분한다. 예: desk@C4, desk@2F-C4",
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*@(?:[1-9][0-9]*F-)?[A-Z]+[1-9][0-9]*$"
+    },
+    "point": {
+      "description": "평면도 이미지의 픽셀 좌표. 화면 좌표이므로 y는 아래로 커진다.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["x", "y"],
+      "properties": {
+        "x": { "type": "number" },
+        "y": { "type": "number" }
+      }
+    },
+    "wall": {
+      "description": "벽 선분. 픽셀 좌표.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["from", "to"],
+      "properties": {
+        "from": { "$ref": "#/$defs/point" },
+        "to": { "$ref": "#/$defs/point" }
+      }
+    },
+    "door": {
+      "description": "문 선분. 픽셀 길이를 0.9m로 간주해 축척을 계산한다 (spec §5.2).",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "from", "to"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "from": { "$ref": "#/$defs/point" },
+        "to": { "$ref": "#/$defs/point" }
+      }
+    },
+    "floor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "walls", "doors", "meters_per_pixel", "origin_px", "columns", "rows"],
+      "properties": {
+        "id": {
+          "description": "층 식별자. 예: 1F",
+          "type": "string",
+          "pattern": "^[1-9][0-9]*F$"
+        },
+        "background_image": {
+          "description": "그리기 배경으로 쓴 사진 경로 (선택). 예: 비상대피도",
+          "type": "string",
+          "minLength": 1
+        },
+        "walls": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/wall" }
+        },
+        "doors": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/door" }
+        },
+        "meters_per_pixel": {
+          "description": "문 폭으로 계산한 축척.",
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "origin_px": {
+          "description": "격자 원점(평면도 바깥 사각형의 왼쪽 아래)의 픽셀 좌표.",
+          "$ref": "#/$defs/point"
+        },
+        "columns": {
+          "description": "격자 열 수. 칸 크기는 1m.",
+          "type": "integer",
+          "minimum": 1
+        },
+        "rows": {
+          "description": "격자 행 수. 칸 크기는 1m.",
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "room": {
+      "description": "방 하나. 층은 칸 표기의 접두어로 구분한다. 예: 2F-A1:D6",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "cells"],
+      "properties": {
+        "name": {
+          "description": "화면과 지시문에 쓰는 방 이름.",
+          "type": "string",
+          "minLength": 1
+        },
+        "cells": { "$ref": "#/$defs/cellRange" }
+      }
+    },
+    "object": {
+      "description": "공간 속 사물 (spec §5.4).",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "label", "cells", "description", "photos", "state"],
+      "properties": {
+        "id": { "$ref": "#/$defs/objectId" },
+        "label": { "type": "string", "minLength": 1 },
+        "cells": { "$ref": "#/$defs/cellRange" },
+        "description": {
+          "description": "사물 설명. 단서를 담아도 되고 비어 있어도 된다 (spec §6.3).",
+          "type": "string"
+        },
+        "photos": {
+          "description": "사진 파일 경로. space.json 옆 photos/ 폴더 기준. 첫 번째 사진을 view 때 모델에 보낸다. 모든 사물에 사진이 있는지는 검증기가 확인한다.",
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "state": {
+          "description": "트리거로 찍을 수 있게(view) 되었는지 여부.",
+          "enum": ["locked", "open"]
+        }
+      }
+    }
+  }
+}
