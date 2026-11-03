@@ -1,0 +1,34 @@
+{
+  "space_id": "sample-space",
+  "floors": [
+    {
+      "id": "1F",
+      "walls": [
+        { "from": { "x": 0, "y": 600 }, "to": { "x": 800, "y": 600 } },
+        { "from": { "x": 800, "y": 600 }, "to": { "x": 800, "y": 0 } },
+        { "from": { "x": 800, "y": 0 }, "to": { "x": 0, "y": 0 } },
+        { "from": { "x": 0, "y": 0 }, "to": { "x": 0, "y": 600 } }
+      ],
+      "doors": [
+        { "id": "door-1", "from": { "x": 100, "y": 600 }, "to": { "x": 190, "y": 600 } }
+      ],
+      "meters_per_pixel": 0.01,
+      "origin_px": { "x": 0, "y": 600 },
+      "columns": 8,
+      "rows": 6
+    }
+  ],
+  "rooms": [
+    { "cells": "A1:D6" }
+  ],
+  "objects": [
+    {
+      "id": "desk@C4",
+      "label": "desk",
+      "cells": "C4:D4",
+      "description": "",
+      "photos": ["desk_front.jpg", "desk_puzzle.jpg"],
+      "state": "locked"
+    }
+  ]
+}

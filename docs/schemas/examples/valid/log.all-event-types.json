@@ -1,0 +1,86 @@
+{
+  "run_id": "r01",
+  "persona": {
+    "age": 27,
+    "job": "개발자",
+    "vocab": "상",
+    "thinking": "말장난을 먼저 떠올림"
+  },
+  "puzzle_set_id": "sample-set",
+  "model": "muse-spark-1.3",
+  "seed": 42,
+  "events": [
+    {
+      "t": 1,
+      "puzzle": 1,
+      "type": "move",
+      "value": "C4",
+      "reason": "지시문의 좌표로 이동"
+    },
+    {
+      "t": 2,
+      "puzzle": 1,
+      "type": "npc_dialogue",
+      "npc": "librarian"
+    },
+    {
+      "t": 3,
+      "puzzle": 1,
+      "type": "view",
+      "value": "desk@C4"
+    },
+    {
+      "t": 4,
+      "puzzle": 1,
+      "type": "rejected",
+      "attempted_action": "view",
+      "value": "sofa@A1",
+      "error": "존재하지 않는 사물입니다"
+    },
+    {
+      "t": 5,
+      "puzzle": 1,
+      "type": "rejected",
+      "attempted_action": null,
+      "value": null,
+      "error": "출력이 JSON 형식이 아닙니다"
+    },
+    {
+      "t": 6,
+      "puzzle": 1,
+      "type": "answer_submitted",
+      "value": "pear",
+      "attempt": 1,
+      "correct": false,
+      "reason": "가상 이유 1"
+    },
+    {
+      "t": 7,
+      "puzzle": 1,
+      "type": "hint_revealed",
+      "level": 1
+    },
+    {
+      "t": 8,
+      "puzzle": 1,
+      "type": "answer_submitted",
+      "value": "apple",
+      "attempt": 2,
+      "correct": true,
+      "reason": "가상 이유 2"
+    },
+    {
+      "t": 9,
+      "puzzle": 1,
+      "type": "puzzle_ended",
+      "result": "solved_with_hint",
+      "attempts_used": 2
+    },
+    {
+      "t": 10,
+      "puzzle": 2,
+      "type": "end",
+      "outcome": "action_limit"
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "baseline_id": "sample-baseline",
+  "puzzle_set_id": "sample-set",
+  "source": "가상 오프라인 관찰 메모",
+  "participants_note": "가상 참가자 메모",
+  "observations": [
+    {
+      "puzzle": 1,
+      "observed": "smooth",
+      "note": "대부분 바로 풀었다는 가상 메모",
+      "mean_score": 3.5
+    },
+    {
+      "puzzle": 2,
+      "observed": "stuck",
+      "note": "많이 막혔다는 가상 메모"
+    }
+  ]
+}

@@ -1,0 +1,71 @@
+{
+  "puzzle_set_id": "sample-set",
+  "space_id": "sample-space",
+  "start_cell": "A1",
+  "start_instruction": "C4의 책상으로 가라",
+  "puzzles": [
+    {
+      "number": 1,
+      "object_id": "desk@C4",
+      "npc": "librarian",
+      "dialogue": [
+        {
+          "text": "가상 대화 1",
+          "contains_hint": false
+        },
+        {
+          "text": "가상 단서 1",
+          "contains_hint": true
+        }
+      ],
+      "image": {
+        "path": "puzzles/sample_1.jpg",
+        "sha256": "0000000000000000000000000000000000000000000000000000000000000001"
+      },
+      "question": "그림이 가리키는 단어는?",
+      "answer": "apple",
+      "answer_letter_count": 5,
+      "max_attempts": 6,
+      "hints": [
+        {
+          "level": 1,
+          "after_wrong": 1,
+          "text": "가상 힌트 1"
+        }
+      ],
+      "next_instruction": "F2의 선반으로 가라",
+      "next_object_id": "shelf@F2"
+    },
+    {
+      "number": 2,
+      "object_id": "shelf@F2",
+      "npc": "librarian",
+      "dialogue": [
+        {
+          "text": "가상 대화 2",
+          "contains_hint": false
+        },
+        {
+          "text": "가상 단서 2",
+          "contains_hint": true
+        }
+      ],
+      "image": {
+        "path": "puzzles/sample_2.jpg",
+        "sha256": "0000000000000000000000000000000000000000000000000000000000000002"
+      },
+      "question": "그림이 가리키는 단어는?",
+      "answer": "pineapple",
+      "answer_letter_count": 9,
+      "hints": [
+        {
+          "level": 1,
+          "after_wrong": 1,
+          "text": "가상 힌트 2"
+        }
+      ],
+      "next_instruction": null,
+      "next_object_id": null
+    }
+  ]
+}

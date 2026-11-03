@@ -1,0 +1,53 @@
+{
+  "run_id": "r0",
+  "persona": {
+    "age": 30,
+    "job": "oracle",
+    "vocab": "중",
+    "thinking": "문자 그대로 읽음"
+  },
+  "puzzle_set_id": "drunkard-set",
+  "model": "oracle",
+  "events": [
+    {
+      "t": 1,
+      "puzzle": 1,
+      "type": "move",
+      "value": "C4"
+    },
+    {
+      "t": 2,
+      "puzzle": 1,
+      "type": "view",
+      "value": "signboard@C4"
+    },
+    {
+      "t": 3,
+      "puzzle": 1,
+      "type": "npc_dialogue",
+      "npc": "drunkard"
+    },
+    {
+      "t": 4,
+      "puzzle": 1,
+      "type": "answer_submitted",
+      "value": "spiral",
+      "attempt": 1,
+      "correct": true,
+      "reason": "oracle: known answer"
+    },
+    {
+      "t": 5,
+      "puzzle": 1,
+      "type": "puzzle_ended",
+      "result": "solved_by_dialogue",
+      "attempts_used": 1
+    },
+    {
+      "t": 6,
+      "puzzle": 1,
+      "type": "end",
+      "outcome": "completed"
+    }
+  ]
+}

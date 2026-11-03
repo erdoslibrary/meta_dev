@@ -1,0 +1,54 @@
+{
+  "space_id": "sample-two-floors",
+  "floors": [
+    {
+      "id": "1F",
+      "background_image": "evacuation_map_1f.jpg",
+      "walls": [
+        { "from": { "x": 0, "y": 300 }, "to": { "x": 300, "y": 300 } }
+      ],
+      "doors": [
+        { "id": "door-1f", "from": { "x": 10, "y": 300 }, "to": { "x": 100, "y": 300 } }
+      ],
+      "meters_per_pixel": 0.01,
+      "origin_px": { "x": 0, "y": 300 },
+      "columns": 3,
+      "rows": 3
+    },
+    {
+      "id": "2F",
+      "walls": [
+        { "from": { "x": 0, "y": 300 }, "to": { "x": 300, "y": 300 } }
+      ],
+      "doors": [
+        { "id": "door-2f", "from": { "x": 10, "y": 300 }, "to": { "x": 100, "y": 300 } }
+      ],
+      "meters_per_pixel": 0.01,
+      "origin_px": { "x": 0, "y": 300 },
+      "columns": 27,
+      "rows": 3
+    }
+  ],
+  "rooms": [
+    { "name": "가상 1층 방", "cells": "1F-A1:C3" },
+    { "name": "가상 2층 방", "cells": "2F-A1:AA3" }
+  ],
+  "objects": [
+    {
+      "id": "desk@2F-C2",
+      "label": "desk",
+      "cells": "2F-C2:D2",
+      "description": "",
+      "photos": [],
+      "state": "locked"
+    },
+    {
+      "id": "reading_area@2F-AA1",
+      "label": "reading_area",
+      "cells": "2F-AA1:AA3",
+      "description": "",
+      "photos": [],
+      "state": "locked"
+    }
+  ]
+}

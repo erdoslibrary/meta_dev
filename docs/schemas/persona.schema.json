@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://realtosim.invalid/schemas/persona.schema.json",
+  "title": "Persona",
+  "description": "무작위로 뽑은 에이전트 페르소나 (spec §7.2). 실행마다 로그에 그대로 기록한다.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["age", "job", "vocab", "thinking"],
+  "properties": {
+    "name": {
+      "description": "데모 설명용 대표 페르소나의 이름 (선택).",
+      "type": "string",
+      "minLength": 1
+    },
+    "age": {
+      "description": "나이. 10대~70대.",
+      "type": "integer",
+      "minimum": 10,
+      "maximum": 79
+    },
+    "job": {
+      "description": "직업. 예: 학생, 약사, 개발자",
+      "type": "string",
+      "minLength": 1
+    },
+    "vocab": {
+      "description": "어휘 수준.",
+      "enum": ["상", "중", "하"]
+    },
+    "thinking": {
+      "description": "사고 방식. 보고서가 값별로 실패율을 비교하므로 목록을 고정한다.",
+      "enum": ["문자 그대로 읽음", "말장난을 먼저 떠올림", "연상을 따라감"]
+    }
+  }
+}

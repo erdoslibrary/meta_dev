@@ -1,0 +1,54 @@
+{
+  "run_id": "r05",
+  "persona": {
+    "age": 42,
+    "job": "판매원",
+    "vocab": "하",
+    "thinking": "말장난을 먼저 떠올림"
+  },
+  "puzzle_set_id": "drunkard-set",
+  "model": "muse-spark-1.3",
+  "events": [
+    {
+      "t": 1,
+      "puzzle": 1,
+      "type": "move",
+      "value": "C4"
+    },
+    {
+      "t": 2,
+      "puzzle": 1,
+      "type": "view",
+      "value": "signboard@C4"
+    },
+    {
+      "t": 3,
+      "puzzle": 1,
+      "type": "npc_dialogue",
+      "npc": "drunkard"
+    },
+    {
+      "t": 4,
+      "puzzle": 1,
+      "type": "answer_submitted",
+      "value": "SPIRAL",
+      "attempt": 1,
+      "correct": true,
+      "reason": "병이 빙글빙글 돌아요! 라벨 맨 앞 글자만 팔아요 팔아요 모으니 L I R P S A! STEP 밑에 1이 딱! S가 1번 타자! S P I R A L로 돌리면 SPIRAL! 돌고돌고는 소용돌이 스파이럴! 실적도 빙글빙글 도는 것처럼! 다음은 SPIRAL로 고고!"
+    },
+    {
+      "t": 5,
+      "puzzle": 1,
+      "type": "puzzle_ended",
+      "result": "solved_by_dialogue",
+      "attempts_used": 1
+    },
+    {
+      "t": 6,
+      "puzzle": 1,
+      "type": "end",
+      "outcome": "completed"
+    }
+  ],
+  "seed": 0
+}

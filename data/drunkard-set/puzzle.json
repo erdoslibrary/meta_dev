@@ -1,0 +1,67 @@
+{
+  "puzzle_set_id": "drunkard-set",
+  "space_id": "gyeongsan-3f",
+  "start_cell": "A1",
+  "start_instruction": "3층 화장실 앞(C4)의 분리배출 안내판을 확인하라",
+  "puzzles": [
+    {
+      "number": 1,
+      "object_id": "signboard@C4",
+      "npc": "drunkard",
+      "dialogue": [
+        {
+          "text": "어.. 자네도 부끄러운 기억을 잊으러 왔나??",
+          "contains_hint": false
+        },
+        {
+          "text": "기억을 찾으러 왔다고?? 왜 굳이... 어려운 선택을 하나. 딸꾹",
+          "contains_hint": false
+        },
+        {
+          "text": "나는 잊기 위해서 술을 마시네.",
+          "contains_hint": false
+        },
+        {
+          "text": "술을 마시면 부끄러워지고, 부끄러우니 술을 마시고, 술을 마시면 또 부끄러워지고... 부끄러우니 또 마시지..",
+          "contains_hint": true
+        },
+        {
+          "text": "오랜만에 찾아온 길손인데.. 같이 놀이 하나 하지 않겠나?",
+          "contains_hint": false
+        },
+        {
+          "text": "내가 이기면 한 잔 더 마시는 거고.. 자네가 이기면 어디로 갈지 알려주지.",
+          "contains_hint": false
+        },
+        {
+          "text": "무슨 놀이 할 거냐고? 내가 이미 얘기하지 않았나? 아니라고? 딸꾹",
+          "contains_hint": true
+        },
+        {
+          "text": "(갑자기 노래를 부르기 시작한다.) 다시 돌고~ 돌고~ 돌고~ 돌고~ 다시 돌고~",
+          "contains_hint": true
+        }
+      ],
+      "on_wrong": "틀렸구먼! 그럼 내가 한 잔 더... 딸꾹",
+      "on_correct": "허허, 제대로 돌아 나왔구먼. 자네가 갈 곳은 SPIRAL일세.",
+      "image": {
+        "path": "puzzles/bottle_quiz.jpg",
+        "sha256": "c0922cc1f6fe33c9386c4970948f65337931efc8446a9f6657a2d1eb3d595c41"
+      },
+      "question": "술꾼이 말한 놀이를 풀어 다음으로 가야 할 장소를 답하세요.",
+      "answer": "spiral",
+      "answer_letter_count": 6,
+      "max_attempts": 5,
+      "hints": [
+        {
+          "level": 1,
+          "after_wrong": 2,
+          "text": "숫자 1이 붙은 병(STEP)이 시작점입니다. 한 병의 끝 글자가 다음 병의 첫 글자로 이어지며, 빨간 첫 글자만 순서대로 읽으세요."
+        }
+      ],
+      "next_instruction": null,
+      "next_object_id": null
+    }
+  ]
+}
+
