@@ -2,8 +2,8 @@
 
 - 용도: `speckit-specify`에 그대로 붙여 넣는 한 글.
 - 원본: `docs/PRD.md`, `docs/TRD.md`. 이 파일이 speckit 입력 기준이다.
-- 범위: 갈래 1(퍼즐 데이터 → 검증 → 오라클 → 에이전트 실행 → 로그 → 보고서) 먼저.
-- 갈래 2(지도, 연출, 뷰어)는 후순위이며 이번 specify 대상이 아니다.
+- 범위: 갈래 1(퍼즐 데이터 → 검증 → 오라클 → 에이전트 실행 → 로그 → 보고서) 먼저. 갈래 1 specify 완료.
+- 갈래 2(지도, 고스트, 층 전환, 주문·잉크 연출, 뷰어)는 `specs/002-map-ghost-viewer/spec.md`가 specify 입력이다.
 
 ## 기능 설명
 
@@ -45,6 +45,19 @@ Real-to-Sim 공간 퍼즐 스튜디오의 핵심 검증 흐름을 만든다.
 - `python -m unittest discover tests -v` 통과.
 - `python -m realtosim.validate`, `oracle`, `report` 명령 동작.
 - `logs/<set>/` 15개 이상, 퍼즐별 `puzzle_ended` 10개 이상.
+- 현 상태: `logs/drunkard-set/` 5회로 기준 미달. 기준 하향 없이 기록만 한다.
+
+## 갈래 2 specify 입력
+
+- 범위: 지도+고스트+층 전환+주문·잉크 연출 포함. 주문 연출은 기본 동작 완성 후 필수(동영상용). 수용 기준과 프론트 스택은 002 plan에서 결정.
+- 입력 로그: `logs/drunkard-set/` 5회 미달 표본(`reports/drunkard-set/report.md`에 명기).
+- 엔진·로그 형식 변경 없음(TRD §9).
+- 비전(003 후보): 층수 입력 → 마우스 평면도 → 사물·방문장소 입력 → 사진·퀴즈 JSON → 풀이 검증. 순서 002 뷰어 → 003 빌더. 당장 spec 없음.
+- 산출물 언어: 한국어 기본. 시간 여유 시 영어 전체 번역(뷰어 UI·보고서 구조·퍼즐 데이터) 추가 작업.
+- 뷰어 구현 언어: TS. 번들러 없이 `tsc` 단일 출력만 사용한다.
+- 뷰어 3D: three.js. importmap+벤더 파일 동봉, CDN 없음, `file://` 오프라인 동작.
+- 디자인 톤: 양피지·먹·봉인 붉은색, 시스템 세리프. 상세 토큰은 002 spec Design Direction.
+- 데모 영상: 사용자 직접 제작. 구현은 뷰어 동작에 집중한다.
 - `reports/<set>/report.md`에 난이도 표, 갈리는 문제, 오답과 이유, 오프라인 사례, 한계 포함.
 
 ## NEEDS CLARIFICATION
@@ -53,3 +66,10 @@ Real-to-Sim 공간 퍼즐 스튜디오의 핵심 검증 흐름을 만든다.
 - [NEEDS CLARIFICATION: 마감 정확한 시각과 제출물 범위는 무엇인가? 데모 영상, 배포, README 범위를 정해야 한다.]
 - [NEEDS CLARIFICATION: 가구 크기 추정 방식은 SAM 박스 비율과 Muse 추정 중 무엇인가?]
 - 최대 3개까지만 specify 질문으로 올리고 나머지는 가정으로 기록한다.
+
+## 할일 (EN 전환, 시간 여유 시)
+
+- `data/drunkard-set/` 퍼즐·공간·NPC·베이스라인 영문화. 담당: 사용자 직접. 사진 속 한글은 제외.
+- 영문화 후 재검증 순서: `validate` → `oracle` → 에이전트 재실행(API 비용 발생) → `report` 재생성.
+- M6·M7 영문 기준 충족 확인(정답 소문자·공백 없음, 대화문에 정답 없음).
+- 조건: 갈래2 기본 동작 완성 후 잔여 시간 있을 때만 착수한다.

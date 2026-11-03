@@ -61,7 +61,7 @@
 ## 5. 범위: 갈래 1 우선
 
 - 갈래 1(핵심, 먼저): 퍼즐 데이터, 에이전트 실행, 로그, 보고서.
-- 갈래 2(보여주기, 뒤에 합류): 평면도, 격자, 발자국 지도, 주문 연출.
+- 갈래 2(진행 중, `specs/002-map-ghost-viewer`): 평면도, 격자, 발자국 지도, 고스트 재생, 층 전환, 주문·잉크 연출. 기술 three.js+TS(오프라인). 톤 양피지·먹. 그 다음 003 후보: 마우스 평면도·사진·퀴즈 입력 빌더.
 
 로그 형식을 먼저 확정한다.
 지도가 덜 되어도 보고서가 있으면 결과물이 성립한다.
@@ -121,8 +121,8 @@
 - OPEN-1 [NEEDS CLARIFICATION]: 퍼즐 최종 선정 목록. 기준은 정해졌으나 목록 미확정.
 - OPEN-2 [NEEDS CLARIFICATION]: 마감 정확한 시각과 제출물(데모 영상, 배포, README 범위).
 - OPEN-3 [NEEDS CLARIFICATION]: 가구 크기 추정 방식(SAM 박스 비율 vs Muse 추정).
-- OPEN-4 [NEEDS CLARIFICATION]: 주문 연출 주체와 화면 범위(갈래 2 착수 시).
-- OPEN-5 [NEEDS CLARIFICATION]: 프론트 기술 스택(지도 렌더링 방식).
+- OPEN-4 [NEEDS CLARIFICATION]: 주문 연출 주체와 화면 범위. 포함 자체는 필수(동영상용)로 확정, 주체·범위는 미결.
+- OPEN-5 해결: three.js + TS. 지도 렌더링 three.js 평면.
 
 ## 12. 저작권과 출처 고지
 
