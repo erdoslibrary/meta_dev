@@ -72,6 +72,85 @@ class RunAgentsTests(unittest.TestCase):
         self.assertEqual(log["events"][-1]["outcome"], "api_error")
         self.assertEqual(len(log["events"]), 1)
 
+    def _tiny_set(self, tmp):
+        import hashlib
+        data = tmp / "data" / "s"
+        (data / "photos").mkdir(parents=True)
+        art = data / "p.png"
+        art.write_bytes(b"img")
+        photo = data / "photos" / "box.jpg"
+        photo.write_bytes(b"pic")
+        space = {"space_id": "sp", "floors": [
+            {"id": "1F", "walls": [{"from": {"x": 0, "y": 0},
+                                    "to": {"x": 1, "y": 0}}],
+             "doors": [{"id": "d", "from": {"x": 0, "y": 0},
+                        "to": {"x": 1, "y": 0}}],
+             "meters_per_pixel": 0.1, "origin_px": {"x": 0, "y": 0},
+             "columns": 6, "rows": 6}],
+            "rooms": [],
+            "objects": [{"id": "box@B2", "label": "box", "cells": "B2",
+                         "description": "", "photos": ["box.jpg"],
+                         "state": "locked"}]}
+        puzzle_set = {"puzzle_set_id": "s", "space_id": "sp",
+                      "start_cell": "A1", "puzzles": [
+                          {"number": 1, "object_id": "box@B2", "npc": "n",
+                           "dialogue": [{"text": "hi", "contains_hint": False}],
+                           "image": {"path": "p.png", "sha256":
+                                     hashlib.sha256(b"img").hexdigest()},
+                           "question": "q", "answer": "yes",
+                           "answer_letter_count": 3,
+                           "hints": [{"level": 1, "after_wrong": 1,
+                                      "text": "h"}],
+                           "next_instruction": None,
+                           "next_object_id": None}]}
+        (data / "space.json").write_text(json.dumps(space), encoding="utf-8")
+        (data / "puzzle.json").write_text(json.dumps(puzzle_set),
+                                          encoding="utf-8")
+        return tmp / "data", tmp / "logs"
+
+    def _play_script(self, n_runs):
+        from tests.test_model_api import FakeResponse, ok_output
+        script = [FakeResponse(200, {"id": "f1"}),
+                  FakeResponse(200, {"id": "f2"})]
+        for _ in range(n_runs):
+            script.append(ok_output(
+                '{"action": "move", "value": "B2", "reason": "s"}'))
+            script.append(ok_output(
+                '{"action": "view", "value": "box@B2", "reason": "s"}'))
+            script.append(ok_output(
+                '{"action": "answer", "value": "yes", "reason": "s"}'))
+        return script
+
+    def test_start_offset_appends_without_touching_earlier(self):
+        from tests.test_model_api import FakeClient
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp = Path(tmp)
+            data_dir, logs_dir = self._tiny_set(tmp)
+            (logs_dir / "s").mkdir(parents=True)
+            old = logs_dir / "s" / "r01.json"
+            old.write_text('{"kept": true}', encoding="utf-8")
+            client = FakeClient(self._play_script(2))
+            run_agents.run_set("s", 2, 0, data_dir=data_dir,
+                               logs_dir=logs_dir, client=client,
+                               cache_path=tmp / "cache.json", start=1)
+            self.assertEqual(json.loads(old.read_text()),
+                             {"kept": True})
+            self.assertTrue((logs_dir / "s" / "r02.json").is_file())
+            self.assertTrue((logs_dir / "s" / "r03.json").is_file())
+
+    def test_refuses_to_overwrite(self):
+        from tests.test_model_api import FakeClient, FakeResponse
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp = Path(tmp)
+            data_dir, logs_dir = self._tiny_set(tmp)
+            (logs_dir / "s").mkdir(parents=True)
+            (logs_dir / "s" / "r01.json").write_text("{}", encoding="utf-8")
+            client = FakeClient([FakeResponse(200, {"id": "f1"})])
+            with self.assertRaises(FileExistsError):
+                run_agents.run_set("s", 1, 0, data_dir=data_dir,
+                                   logs_dir=logs_dir, client=client,
+                                   cache_path=tmp / "cache.json", start=0)
+
     def test_same_sha_uploads_once(self):  # TRD #27
         from tests.test_model_api import FakeClient, FakeResponse
         with tempfile.TemporaryDirectory() as tmp:

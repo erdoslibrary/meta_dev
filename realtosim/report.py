@@ -139,8 +139,8 @@ def render(set_id, puzzle_set, baseline, agg, verdict, analysis):
         lines.append(f"- {n}번: 오프라인 {o.get('observed', '기록 없음')} "
                      f"({o.get('note', '')}) / 에이전트 {agent}")
     lines += ["", "## 한계", "",
-              f"- 표본 수: 실행 {agg['runs']}회 (목표 15회 이상, "
-              "퍼즐별 10개 이상 필요).",
+              f"- 표본 수: 실행 {agg['runs']}회 (목표 5회, "
+              "2026-11-03 15회에서 하향. spec/TRD 기준과 다름).",
               "- 프롬프트 한계: 시스템 프롬프트는 고정 문구이며 5회 소진 규칙·"
               "상한을 모델에 알리지 않는다.",
               "- 사진 오인 가능: view 사진·퍼즐 그림 해석은 모델에 의존한다.",

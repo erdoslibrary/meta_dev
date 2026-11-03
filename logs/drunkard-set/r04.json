@@ -1,0 +1,78 @@
+{
+  "run_id": "r04",
+  "persona": {
+    "age": 46,
+    "job": "교사",
+    "vocab": "상",
+    "thinking": "연상을 따라감"
+  },
+  "puzzle_set_id": "drunkard-set",
+  "model": "muse-spark-1.3",
+  "events": [
+    {
+      "t": 1,
+      "puzzle": 1,
+      "type": "move",
+      "value": "C4"
+    },
+    {
+      "t": 2,
+      "puzzle": 1,
+      "type": "view",
+      "value": "signboard@C4"
+    },
+    {
+      "t": 3,
+      "puzzle": 1,
+      "type": "npc_dialogue",
+      "npc": "drunkard"
+    },
+    {
+      "t": 4,
+      "puzzle": 1,
+      "type": "answer_submitted",
+      "value": "스파이럴계단",
+      "attempt": 1,
+      "correct": false,
+      "reason": "병 라벨의 첫 글자에 붉은 표시가 있고 STEP 밑바닥에 1이 있어 첫 글자만 모으니 L-I-R-P-S-A가 되는데, 이를 연상해 재배열하면 돌고 도는 소용돌이, 즉 SPIRAL이 된다. 술꾼의 중얼거림인 마시면 부끄럽고 부끄러우니 마신다는 무한 반복과 다시 돌고 돌고 노래도 빙빙 도는 나선과 통하고, STEP·ANGEL·LIGHT·INFER는 지옥에서 천상으로 오르는 계단의 이미지와 겹친다. 따라서 다음 행선지는 나선형 수직 동선, 곧 스파이럴계단이다."
+    },
+    {
+      "t": 5,
+      "puzzle": 1,
+      "type": "answer_submitted",
+      "value": "나선형계단앞",
+      "attempt": 2,
+      "correct": false,
+      "reason": "병 라벨의 붉게 분리된 첫 글자를 모으면 LIGHT의 L, INFER의 I, ROSA의 R, PARI의 P, STEP의 S, ANGEL의 A로 LIRPSA가 되는데 이를 재배열하면 SPIRAL, 즉 소용돌이 나선이 된다. STEP 바닥의 1은 SPIRAL의 첫 글자 S가 시작점임을 알려주고, 술꾼의 중얼거림인 술-부끄러움의 무한 순환과 다시 돌고 돌고라는 노래도 모두 회전과 나선을 연상시킨다. 분리배출처럼 글자를 분리해 얻은 나선이 가리키는 교내 장소로 나선형계단앞이 가장 자연스러워 그렇게 답했다."
+    },
+    {
+      "t": 6,
+      "puzzle": 1,
+      "type": "hint_revealed",
+      "level": 1
+    },
+    {
+      "t": 7,
+      "puzzle": 1,
+      "type": "answer_submitted",
+      "value": "SPIRAL",
+      "attempt": 3,
+      "correct": true,
+      "reason": "1번 병 STEP에서 시작해 끝글자와 첫글자를 잇는 끝말잇기를 하면 STEP(P)->PARI(I)->INFER(R)->ROSA(A)->ANGEL(L)->LIGHT(T) 순서가 되고, 빨간 첫 글자만 순서대로 읽으면 S-P-I-R-A-L 즉 SPIRAL이 되어 다음 장소가 SPIRAL이다."
+    },
+    {
+      "t": 8,
+      "puzzle": 1,
+      "type": "puzzle_ended",
+      "result": "solved_with_hint",
+      "attempts_used": 3
+    },
+    {
+      "t": 9,
+      "puzzle": 1,
+      "type": "end",
+      "outcome": "completed"
+    }
+  ],
+  "seed": 0
+}

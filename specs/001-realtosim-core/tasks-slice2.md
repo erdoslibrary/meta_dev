@@ -42,7 +42,7 @@
 - [X] T210 [US3] `tests/test_personas.py`: 분포(3값 각 5)·스키마·10대 규칙·시드 재현
 - [X] T211 [US3] `realtosim/run_agents.py` 구현: TRD §4 시스템 프롬프트 원문, 매 차례 `observe` → `json.dumps(ensure_ascii=False)` + 마지막 메시지에 퍼즐그림/직전사진 file_id, `submit` 반복, `ModelAPIError` 즉시 `abort` (`end(api_error)`), 이미지 사전 준비(SHA 불일치·파일 없음 시작 금지)·`workspace/cache/files.json` 캐시(동일 sha 재사용 1회 업로드), 새 `run_id` (`r01`…; 끊김 잇지 않음), `logs/<set>/` 저장. 핵심 루프는 `respond_fn` 주입으로 테스트 가능
 - [X] T212 [US3] `tests/test_run_agents.py` (FakeModel, 네트워크 없음): 완주 로그 `log.schema.json` 통과, API 실패 시 `abort` → `end(api_error)`, 동일 sha 1회 업로드(#27)
-- [ ] T213 [US3] 실실행: `python -m realtosim.run_agents drunkard-set --runs 15 --seed <S>` → `logs/drunkard-set/r*.json` 15개 (보류 2026-11-03: 퍼즐 미확정·시간 대비 효용 낮음, r01~r03 3회 로그로 대체. 재개 시 seed 0 전체 재실행 약 30분)
+- [X] T213 [US3] 실실행: `python -m realtosim.run_agents drunkard-set --runs 15 --seed <S>` → `logs/drunkard-set/r*.json` 5개 (2026-11-03 목표 15→5회 하향. r01~r03 보존 + `--runs 2 --start 3 --seed 0` append)
 
 ## Phase 4: US4 — 난이도 보고서 (P2)
 

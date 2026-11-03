@@ -113,8 +113,12 @@ def run_once(space, puzzle_set, persona, *, run_id, model_name, seed,
 
 
 def run_set(set_id, runs, seed, data_dir="data", logs_dir="logs",
-            max_actions=50, client=None, cache_path=CACHE_PATH):
-    """Personas up front (TRD §7), then each run to logs/<set>/rNN.json."""
+            max_actions=50, client=None, cache_path=CACHE_PATH, start=0):
+    """Personas up front (TRD §7), then each run to logs/<set>/rNN.json.
+
+    start skips the first start personas/run_ids so existing logs append
+    untouched. Refuses to overwrite an existing log file.
+    """
     data_dir, logs_dir = Path(data_dir), Path(logs_dir)
     space = load_json(data_dir / set_id / "space.json")
     puzzle_set = load_json(data_dir / set_id / "puzzle.json")
@@ -123,18 +127,23 @@ def run_set(set_id, runs, seed, data_dir="data", logs_dir="logs",
     def respond_fn(system, turns):
         return model_api.respond(own_client, settings.model(), system, turns)
 
-    image_ids = prepare_images(data_dir / set_id, puzzle_set, space,
-                               own_client, cache_path)
-    group = personas.generate(runs, seed=seed)
     out_dir = logs_dir / set_id
     out_dir.mkdir(parents=True, exist_ok=True)
+    group = personas.generate(start + runs, seed=seed)[start:start + runs]
+    targets = [out_dir / f"r{start + i + 1:02d}.json"
+               for i in range(len(group))]
+    for path in targets:
+        if path.is_file():
+            raise FileExistsError(f"덮어쓰기 거부: {path}")
+    image_ids = prepare_images(data_dir / set_id, puzzle_set, space,
+                               own_client, cache_path)
     logs = []
-    for i, persona in enumerate(group):
+    for i, persona, path in zip(range(start, start + len(group)), group,
+                                 targets):
         log = run_once(space, puzzle_set, persona,
                        run_id=f"r{i + 1:02d}", model_name=settings.model(),
                        seed=seed, respond_fn=respond_fn, image_ids=image_ids,
                        max_actions=max_actions)
-        path = out_dir / f"r{i + 1:02d}.json"
         path.write_text(json.dumps(log, ensure_ascii=False, indent=2),
                         encoding="utf-8")
         logs.append(log)
@@ -147,7 +156,9 @@ def run_set(set_id, runs, seed, data_dir="data", logs_dir="logs",
 def main(argv=None):
     parser = argparse.ArgumentParser(description="Run agent episodes (TRD §7).")
     parser.add_argument("set", help="puzzle_set_id, equals directory name")
-    parser.add_argument("--runs", type=int, default=15)
+    parser.add_argument("--runs", type=int, default=5)
+    parser.add_argument("--start", type=int, default=0,
+                        help="skip first N (append after existing logs)")
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--data", default="data")
     parser.add_argument("--logs", default="logs")
@@ -155,8 +166,9 @@ def main(argv=None):
     args = parser.parse_args(argv)
     try:
         run_set(args.set, args.runs, args.seed, args.data, args.logs,
-                args.max_actions)
-    except (model_api.MissingKeyError, ImageError) as e:
+                args.max_actions, start=args.start)
+    except (model_api.MissingKeyError, ImageError,
+            FileExistsError) as e:
         print(f"run_agents: {e}", file=sys.stderr)
         return 2
     except model_api.ModelAPIError as e:
