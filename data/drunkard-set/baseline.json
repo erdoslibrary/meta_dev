@@ -1,0 +1,13 @@
+{
+  "baseline_id": "drunkard-baseline",
+  "puzzle_set_id": "drunkard-set",
+  "source": "42경산 오프라인 플레이",
+  "observations": [
+    {
+      "puzzle": 1,
+      "observed": "stuck",
+      "note": "숫자 1이 붙은 STEP에서 시작해 끝 글자와 첫 글자를 잇는 규칙(LinkedList)을 바로 떠올리지 못해 막힌 참가자가 있었음."
+    }
+  ]
+}
+
