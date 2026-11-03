@@ -1,15 +1,15 @@
-docs/spec.md, docs/design.md, docs/acceptance.md, docs/schemas/를 읽고 아래 두 가지만 하세요.
+docs/PRD.md, docs/TRD.md, requirement.md, docs/schemas/를 읽고 아래 두 가지만 하세요.
 
-1. 저장소 루트에 AGENTS.md를 만드세요. design.md "미결 TODO"의 "Muse Code 지침 파일" 계획대로 읽을 문서와 지켜야 할 규칙을 짧게 적습니다. (meta 만의 검증 후 만들 예정)
+1. 저장소 루트에 AGENTS.md를 만드세요. TRD §11의 "Muse Code 지침 파일" 계획대로 읽을 문서와 지켜야 할 규칙을 짧게 적습니다. (meta 만의 검증 후 만들 예정)
 
 - tdd, sdd 언제 넣지?
 
 
-2. realtosim/game_engine.py를 design.md "인터페이스 계약"의 §2, §3, §4, §8대로 구현하고, tests/test_game_engine.py를 작성하세요.
+2. realtosim/game_engine.py를 TRD §3, §4대로 구현하고, tests/test_game_engine.py를 작성하세요.
 - 엔진은 순수 상태 머신입니다. 모델, 파일, 네트워크에 접근하지 않고 무작위성도 없습니다.
 - 테스트 입력은 docs/schemas/examples/valid/의 표본입니다.
-- 테스트 범위는 §9의 #1~#16, #18~#23, #28, #29, 노출 검사, 로그 검사입니다.
-- 거절 메시지는 §4.1의 문장과 정확히 같아야 합니다.
+- 테스트 범위는 TRD §10의 #1~#29, 노출 검사, 로그 검사입니다.
+- 거절 메시지는 TRD §4의 문장과 정확히 같아야 합니다.
 - requirements.txt의 jsonschema 외에 새 패키지를 추가하지 마세요.
 
 지키세요.
