@@ -7,6 +7,8 @@
 **변경 사유 (2026-11-04)**: 검증 규칙 3건을 반영. 재생 거부 표본은 `embed.py` 검증 게이트에서 제외하고 `data.js`에 그대로 포함한다(항목 1). 브라우저 검증은 재생 필요 항목(최상위 필수 필드·이벤트 종류별 필수 필드·값 타입과 enum·칸·사물 표기·`t` 순서·마지막 `end`)으로 한정하고 `persona` 내용 등 재생 무관 규칙은 검사하지 않으며, 내장 로그의 스키마 전체 검증은 `embed.py`가 맡는다(항목 2).
 **변경 사유 (2026-11-04)**: 재생 거부 표본은 결함 유지·`data.js` 규칙 동일 적용으로 고치고(차단 3), 표본 구조를 바로 아래 `*.json`·`refusal/`·`sets/<puzzle_set_id>/`(로그 `puzzle_set_id` 연결)로 정한다(차단 4).
 **변경 사유 (2026-11-04)**: 지시 1~15 문서 수정 반영. 재생 전 검증을 t가 1부터 1씩 증가로 정확히 적는다.
+**변경 사유 (2026-11-04)**: 결정 E 페이로드 분리를 반영. 세트 공용 `puzzle`은 `answer`·`next_instruction`을 싣지 않고, 로그별 정답은 `reveals/<로그 키>`에 그 로그에서 `failed`인 퍼즐만 둔다(`next_instruction`이 `null`이면 생략). `sets/<id>/reveals`와 `sample_sets/<id>/reveals` 모두 같은 규칙을 따른다.
+**변경 사유 (2026-11-04)**: 결정 E 키 규칙을 통일. 정답은 로그가 연결된 세트의 `reveals`에 둔다. 키는 실로그 상대 경로·`testdata/<이름>`·`refusal/<이름>`, 퍼즐 번호 키는 문자열이다.
 
 엔진·로그·데이터 형식을 바꾸지 않는다(TRD §9, FR-001). 아래는 뷰어가 읽는 기존 형식의 뷰어 관점 투영이다.
 
@@ -28,7 +30,8 @@
 ### 표시용 정적 데이터 (원천: `data/<set>/`, 읽기 전용)
 
 - `space.json`: 층·방·사물·격자 범위. 평면도 기하(`walls`, `doors`, `origin_px`, `meters_per_pixel`)와 사물 `cells`.
-- `puzzle.json`: 퍼즐별 `dialogue`(대화문), `on_wrong`/`on_correct`(화면 전용 반응, `on_correct`는 맞힌 제출 뒤 표시하며 대사의 다음 장소·정답 문자열 그대로), `failed` 퍼즐의 `answer`(종료 직후 1회만), `failed` 퍼즐의 `next_instruction`(`answer`와 함께 종료 직후 1회만, `null`이면 다음 장소 문구 없음), `start_cell`.
+- `puzzle.json`: 퍼즐별 `dialogue`(대화문), `on_wrong`/`on_correct`(화면 전용 반응, `on_correct`는 맞힌 제출 뒤 표시하며 대사의 다음 장소·정답 문자열 그대로), `failed` 퍼즐의 `answer`(종료 직후 1회만), `failed` 퍼즐의 `next_instruction`(`answer`와 함께 종료 직후 1회만, `null`이면 다음 장소 문구 없음), `start_cell`. 단 `data.js` 페이로드의 세트 공용 `puzzle`에는 `answer`·`next_instruction`을 싣지 않으며, 로그별 정답은 아래 `reveals`에 둔다(결정 E).
+- `reveals`: `data.js` 페이로드의 로그별 정답. 정답은 로그가 연결된 세트(세트 조회 결과 `sets/<id>` 또는 `sample_sets/<id>`)의 `reveals`에 둔다. `reveals/<로그 키> = {퍼즐 number 문자열: {answer, next_instruction}}`이며, 그 로그에서 `failed`인 퍼즐만 포함하고 `next_instruction`이 `null`이면 생략한다. 로그 키는 실로그 상대 경로(`r01`, `oracle/r0`), 표본 로그 `testdata/<이름>`, 재생 거부 표본 `refusal/<이름>`이다.
 - `npc.json`: NPC 이름·이미지. 로그 `npc_dialogue.npc`와 조인.
 - 사진: `photos/`·`puzzles/`·`npcs/` 경로. `<img>`로 표시, WebGL 텍스처로 쓰지 않는다.
 - 표시 금지(TRD §4·FR-005, 결정 A): `next_object_id`(전면 금지), 사진 경로(화면), 해시(산출물), `reason`(표시·`data.js` 제외), 미공개 힌트와 힌트 본문, `failed`가 아닌 퍼즐의 정답(`puzzle.json`의 `answer` 필드). `on_correct`(맞힌 제출 뒤, 다음 장소·정답 문자열 그대로)와 `answer_submitted.value`는 제출 원문으로 표시 가능. `next_instruction`은 `failed` 직후 1회만 허용하고 맞힌 퍼즐에는 표시하지 않는다.
@@ -36,7 +39,7 @@
 ### 고스트 (파생: 1회 실행의 시간순 재생 상태)
 
 - 필드: 현재 `t`, 현재 퍼즐 번호, 현재 위치 칸, 열린 사물 집합, 제출 결과(`last_result` 상당), 종료 결과.
-- 동작: 처음부터 끝까지 순서대로 재생. `view` 지점에서 사물 사진+`npc_dialogue`, 퍼즐 종료마다 `puzzle_ended.result`, `failed` 직후에만 해당 퍼즐 정답(`puzzle.json`의 `answer` 필드)과 `next_instruction` 1회 표시(`null`이면 다음 장소 문구 없음). 맞힌 퍼즐의 다음 장소는 `on_correct`(맞힌 제출 뒤 표시)로 전달한다. 파일 선택 로그의 `failed` 정답·`next_instruction`은 로그와 `puzzle.json`을 함께 선택했을 때만 표시하고, 없으면 "정답 데이터 없음"만 표시하고 다음 장소 문구는 표시하지 않는다(결정 B).
+- 동작: 처음부터 끝까지 순서대로 재생. `view` 지점에서 사물 사진+`npc_dialogue`, 퍼즐 종료마다 `puzzle_ended.result`, `failed` 직후에만 해당 퍼즐 정답(`puzzle.json`의 `answer` 필드, 페이로드에서는 `reveals`에서 읽는다)과 `next_instruction` 1회 표시(`null`이면 다음 장소 문구 없음). 맞힌 퍼즐의 다음 장소는 `on_correct`(맞힌 제출 뒤 표시)로 전달한다. 파일 선택 로그의 `failed` 정답·`next_instruction`은 로그와 `puzzle.json`을 함께 선택했을 때만 표시하고, 없으면 "정답 데이터 없음"만 표시하고 다음 장소 문구는 표시하지 않는다(결정 B).
 
 ### 주문 연출 상태 (FR-006)
 

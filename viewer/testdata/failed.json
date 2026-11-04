@@ -15,6 +15,16 @@
     { "t": 9, "puzzle": 1, "type": "answer_submitted", "value": "보기4", "attempt": 4, "correct": false, "reason": "넷째 추측" },
     { "t": 10, "puzzle": 1, "type": "answer_submitted", "value": "보기5", "attempt": 5, "correct": false, "reason": "다섯째 추측" },
     { "t": 11, "puzzle": 1, "type": "puzzle_ended", "result": "failed", "attempts_used": 5 },
-    { "t": 12, "puzzle": 1, "type": "end", "outcome": "completed" }
+    { "t": 12, "puzzle": 2, "type": "move", "value": "D5" },
+    { "t": 13, "puzzle": 2, "type": "view", "value": "signboard@C4" },
+    { "t": 14, "puzzle": 2, "type": "npc_dialogue", "npc": "drunkard" },
+    { "t": 15, "puzzle": 2, "type": "answer_submitted", "value": "보기1", "attempt": 1, "correct": false, "reason": "첫 추측" },
+    { "t": 16, "puzzle": 2, "type": "answer_submitted", "value": "보기2", "attempt": 2, "correct": false, "reason": "둘째 추측" },
+    { "t": 17, "puzzle": 2, "type": "hint_revealed", "level": 1 },
+    { "t": 18, "puzzle": 2, "type": "answer_submitted", "value": "보기3", "attempt": 3, "correct": false, "reason": "셋째 추측" },
+    { "t": 19, "puzzle": 2, "type": "answer_submitted", "value": "보기4", "attempt": 4, "correct": false, "reason": "넷째 추측" },
+    { "t": 20, "puzzle": 2, "type": "answer_submitted", "value": "보기5", "attempt": 5, "correct": false, "reason": "다섯째 추측" },
+    { "t": 21, "puzzle": 2, "type": "puzzle_ended", "result": "failed", "attempts_used": 5 },
+    { "t": 22, "puzzle": 2, "type": "end", "outcome": "completed" }
   ]
 }

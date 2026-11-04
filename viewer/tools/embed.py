@@ -96,6 +96,7 @@ def filter_log(doc: dict) -> dict:
 
 
 def filter_puzzle(doc: dict, failed: set) -> dict:
+    """Shared set puzzle: dialogue text only, no answers (reveals holds them)."""
     out = strip_banned(doc)
     entries = out.get("puzzles", [])
     for entry in entries:
@@ -105,6 +106,28 @@ def filter_puzzle(doc: dict, failed: set) -> dict:
             entry.pop("next_instruction", None)
         elif entry.get("next_instruction") is None:
             entry.pop("next_instruction", None)
+        if isinstance(entry.get("dialogue"), list):
+            entry["dialogue"] = [
+                {"text": line.get("text")}
+                for line in entry["dialogue"]
+                if isinstance(line, dict)
+            ]
+    return out
+
+
+def reveals_for(puzzle_doc: dict, failed: set) -> dict:
+    """Per-log answers: {<number string>: {answer[, next_instruction]}}.
+
+    Only puzzles failed in that log; null next_instruction omitted.
+    """
+    out = {}
+    for entry in puzzle_doc.get("puzzles", []):
+        number = entry.get("number")
+        if number in failed and "answer" in entry:
+            item = {"answer": entry["answer"]}
+            if entry.get("next_instruction") is not None:
+                item["next_instruction"] = entry["next_instruction"]
+            out[str(number)] = item
     return out
 
 
@@ -128,11 +151,12 @@ def collect_set(set_name: str, log_dir: Path, data_dir: Path):
     except FileNotFoundError as exc:
         print(f"skip set {set_name}: {exc}", file=sys.stderr)
         return None
-    failed: set = set()
-    for doc in logs.values():
-        failed |= failed_numbers(doc)
-    entry = filter_static_set(space, puzzle, npc, failed)
+    entry = filter_static_set(space, puzzle, npc, set())
     entry["logs"] = {key: filter_log(doc) for key, doc in logs.items()}
+    entry["reveals"] = {
+        key: reveals_for(puzzle, failed_numbers(doc))
+        for key, doc in logs.items()
+    }
     return entry
 
 
@@ -153,16 +177,14 @@ def collect_refusal(test_dir: Path):
     return samples
 
 
-def collect_sample_sets(test_dir: Path, linked_logs: list) -> dict:
+def collect_sample_sets(test_dir: Path, samples: dict) -> dict:
     sets_dir = test_dir / "sets"
     out = {}
     if not sets_dir.is_dir():
         return out
     by_set_id: dict = {}
-    for doc in linked_logs:
-        by_set_id.setdefault(doc.get("puzzle_set_id"), set()).update(
-            failed_numbers(doc)
-        )
+    for stem, doc in samples.items():
+        by_set_id.setdefault(doc.get("puzzle_set_id"), []).append((stem, doc))
     for child in sorted(sets_dir.iterdir()):
         if not child.is_dir():
             continue
@@ -173,9 +195,13 @@ def collect_sample_sets(test_dir: Path, linked_logs: list) -> dict:
                 parts[name] = load_json(path)
         if not parts:
             continue
-        failed = by_set_id.get(child.name, set())
         if "puzzle" in parts:
-            parts["puzzle"] = filter_puzzle(parts["puzzle"], failed)
+            puzzle_orig = parts["puzzle"]
+            parts["puzzle"] = filter_puzzle(puzzle_orig, set())
+            parts["reveals"] = {
+                f"testdata/{stem}": reveals_for(puzzle_orig, failed_numbers(doc))
+                for stem, doc in by_set_id.get(child.name, [])
+            }
         if "space" in parts:
             parts["space"] = strip_banned(parts["space"])
         if "npc" in parts:
@@ -208,6 +234,50 @@ def gate_errors(root: Path = ROOT) -> dict:
     return errors
 
 
+def _link_cross_set_reveals(root, sets, sample_sets, samples, refusal):
+    """Reveals for sample/refusal logs linked to data/ sets.
+
+    Real logs land in collect_set; sample_sets entries already carry
+    their own testdata/* reveals. Every other embedded log lands in
+    its linked set (sets/<id> or sample_sets/<id>) under testdata/<name>
+    or refusal/<name> with the same per-log rule.
+    """
+    labeled = [(f"testdata/{stem}", doc) for stem, doc in samples.items()]
+    labeled += [(f"refusal/{name}", doc) for name, doc in refusal.items()]
+    by_set: dict = {}
+    for key, doc in labeled:
+        by_set.setdefault(doc.get("puzzle_set_id"), []).append((key, doc))
+    for psid, items in by_set.items():
+        if psid in sample_sets:
+            target = sample_sets[psid]
+            puzzle_orig = load_json(
+                root / "viewer" / "testdata" / "sets" / psid / "puzzle.json"
+            )
+        else:
+            data_dir = root / "data" / psid if psid else None
+            if data_dir is None or not data_dir.is_dir():
+                continue
+            target = sets.get(psid)
+            if target is None:
+                try:
+                    space = load_json(data_dir / "space.json")
+                    puzzle_orig = load_json(data_dir / "puzzle.json")
+                    npc = load_json(data_dir / "npc.json")
+                except (OSError, ValueError):
+                    continue
+                target = filter_static_set(space, puzzle_orig, npc, set())
+                target["logs"] = {}
+                target["reveals"] = {}
+                sets[psid] = target
+            else:
+                puzzle_orig = load_json(data_dir / "puzzle.json")
+        reveals = target.setdefault("reveals", {})
+        for key, doc in items:
+            reveals.setdefault(
+                key, reveals_for(puzzle_orig, failed_numbers(doc))
+            )
+
+
 def build_payload(root: Path = ROOT) -> dict:
     logs_root = root / "logs"
     sets = {}
@@ -222,7 +292,8 @@ def build_payload(root: Path = ROOT) -> dict:
     test_dir = root / "viewer" / "testdata"
     samples = collect_testdata(test_dir)
     refusal = collect_refusal(test_dir)
-    sample_sets = collect_sample_sets(test_dir, list(samples.values()))
+    sample_sets = collect_sample_sets(test_dir, samples)
+    _link_cross_set_reveals(root, sets, sample_sets, samples, refusal)
     return {
         "sets": sets,
         "testdata": {k: filter_log(v) for k, v in samples.items()},
@@ -231,9 +302,45 @@ def build_payload(root: Path = ROOT) -> dict:
     }
 
 
-def main() -> int:
+def _lookup_targets(root: Path = ROOT) -> list:
+    """Every embedded log: logs/ plus top-level testdata plus refusal/."""
+    targets = []
+    logs_root = root / "logs"
+    if logs_root.is_dir():
+        targets += sorted(logs_root.rglob("*.json"))
+    test_dir = root / "viewer" / "testdata"
+    if test_dir.is_dir():
+        targets += sorted(test_dir.glob("*.json"))
+        refusal_dir = test_dir / "refusal"
+        if refusal_dir.is_dir():
+            targets += sorted(refusal_dir.glob("*.json"))
+    return targets
+
+
+def set_lookup_errors(root: Path = ROOT) -> dict:
+    """puzzle_set_id values with no unique set source.
+
+    Each log resolves against sets/<id> first, then data/<id>; an id
+    found in both or in neither is a violation (no data.js).
+    Returns {puzzle_set_id: [log paths]}; {} means all resolve.
+    """
+    errors: dict = {}
+    for path in _lookup_targets(root):
+        try:
+            doc = load_json(path)
+        except (OSError, ValueError):
+            continue  # unreadable files are reported by gate_errors
+        psid = doc.get("puzzle_set_id")
+        in_sets = bool(psid) and (root / "viewer" / "testdata" / "sets" / psid).is_dir()
+        in_data = bool(psid) and (root / "data" / psid).is_dir()
+        if in_sets == in_data:
+            errors.setdefault(psid or str(path), []).append(str(path))
+    return errors
+
+
+def main(root: Path = ROOT) -> int:
     try:
-        errors = gate_errors()
+        errors = gate_errors(root)
     except Exception as exc:  # environment failure: report, never install
         print(f"embed gate failed to run: {exc}", file=sys.stderr)
         return 2
@@ -245,11 +352,23 @@ def main() -> int:
                 print(f"  {path}: {msg}", file=sys.stderr)
         return 1
     try:
-        payload = build_payload()
+        lookup = set_lookup_errors(root)
+    except Exception as exc:
+        print(f"embed lookup failed to run: {exc}", file=sys.stderr)
+        return 2
+    if lookup:
+        print("embed gate: set lookup violations, data.js not written:",
+              file=sys.stderr)
+        for psid, paths in lookup.items():
+            for path in paths:
+                print(f"  {psid}: {path}", file=sys.stderr)
+        return 1
+    try:
+        payload = build_payload(root)
     except Exception as exc:
         print(f"embed failed: {exc}", file=sys.stderr)
         return 2
-    out_dir = VIEWER / "dist"
+    out_dir = root / "viewer" / "dist"
     out_dir.mkdir(parents=True, exist_ok=True)
     text = "window.RT_DATA = " + json.dumps(payload, ensure_ascii=False) + ";"
     with open(out_dir / "data.js", "w", encoding="utf-8") as f:

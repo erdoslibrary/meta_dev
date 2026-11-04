@@ -7,6 +7,8 @@
 **변경 사유 (2026-11-04)**: 검증 규칙 3건을 반영. 재생 거부 표본은 `embed.py` 검증 게이트에서 제외하고 `data.js`에 그대로 포함한다(항목 1). 파일 선택 "전체 검증"을 재생 필요 항목 범위로 고친다(항목 2). `embed.py`는 표준 라이브러리 + `jsonschema`만 허용하고 `.venv/bin/python`으로 실행한다(항목 3).
 **변경 사유 (2026-11-04)**: 재생 거부 표본은 결함 유지·`data.js` 규칙 동일 적용으로 고치고(차단 3), 표본 구조를 바로 아래 `*.json`·`refusal/`·`sets/<puzzle_set_id>/`로 정한다(차단 4).
 **변경 사유 (2026-11-04)**: 지시 1~15 문서 수정 반영. 세트 탐색 규칙(sets→data, 중복·없음이면 미생성), 허용 필드(퍼즐 7종·대화문 text만, contains_hint 제외), Seal Red 결과 줄 한정을 명시한다.
+**변경 사유 (2026-11-04)**: 결정 E 페이로드 분리를 반영. 세트 공용 `puzzle`에는 `answer`·`next_instruction`을 넣지 않고, 로그별 정답은 `reveals/<로그 키>`에 그 로그에서 `failed`인 퍼즐만 둔다(`next_instruction`이 `null`이면 생략). `sets/<id>/reveals`와 `sample_sets/<id>/reveals` 모두 같은 규칙을 따른다.
+**변경 사유 (2026-11-04)**: 결정 E 키 규칙을 통일. 정답은 로그가 연결된 세트(세트 조회 결과 `sets/<id>` 또는 `sample_sets/<id>`)의 `reveals`에 둔다. 키는 실로그 상대 경로(`r01`, `oracle/r0`)·표본 로그 `testdata/<이름>`·재생 거부 표본 `refusal/<이름>`, 퍼즐 번호 키는 문자열(`"1"`)이다.
 
 ## Input Contract (읽기 전용, 형식 변경 없음)
 
@@ -33,7 +35,8 @@
 - 검증: 내장 전 스키마 통과 요구 로그 원본(`reason` 제거 전)을 `log.schema.json`으로 검증하고, 실패 시 `data.js`를 생성하지 않는다. `answer_submitted`의 `reason`은 스키마 필수 필드이므로 제거 전 원본으로 검증한다. 재생 거부 표본(`t` 불연속·마지막 비-`end`)은 이 검증 게이트에서 제외하되, `t` 불연속과 마지막 비-`end` 결함은 유지한 채 `reason` 제거를 포함한 `data.js` 허용·제외 규칙은 다른 로그와 똑같이 적용해 포함한다(브라우저 재생 거부·이유 표시는 V-2에서 확인).
 - 출력: `viewer/dist/data.js` — `window.RT_DATA = {...}` 한 문장. 커밋한다.
 - 사진 바이너리는 내장하지 않는다. 경로만 싣고 `<img>`가 상대 경로로 읽는다.
-- 허용: 로그 헤더 `run_id`·`persona`·`puzzle_set_id`·`model`·`seed`(선택)·`events[]`, 공간 기하/방/사물, 퍼즐 `number`·`start_instruction`·`question`·`object_id`·`image.path`·`answer_letter_count`·`max_attempts`·대화문(`text`만)·`on_wrong`·`on_correct`·`start_cell`, 해당 로그에서 `failed`인 퍼즐의 `answer`·`next_instruction`(로그별), NPC 이름·이미지, 사진 경로, 로그 이벤트(`reason` 제외).
+- 허용: 로그 헤더 `run_id`·`persona`·`puzzle_set_id`·`model`·`seed`(선택)·`events[]`, 공간 기하/방/사물, 퍼즐 `number`·`start_instruction`·`question`·`object_id`·`image.path`·`answer_letter_count`·`max_attempts`·대화문(`text`만)·`on_wrong`·`on_correct`·`start_cell`, `reveals/<로그 키> = {퍼즐 number 문자열: {answer, next_instruction}}`(로그가 연결된 세트의 `reveals`에, 그 로그에서 `failed`인 퍼즐만, `next_instruction`이 `null`이면 생략), NPC 이름·이미지, 사진 경로, 로그 이벤트(`reason` 제외).
+- 분리(결정 E): 세트 공용 `puzzle`에는 `answer`·`next_instruction`을 넣지 않는다. 정답은 로그가 연결된 세트(세트 조회 결과 `sets/<id>` 또는 `sample_sets/<id>`)의 `reveals`에만 두며, `sets/<id>/reveals`와 `sample_sets/<id>/reveals` 모두 같은 규칙을 따른다. 로그 키는 실로그 상대 경로(`r01`, `oracle/r0`), 표본 로그 `testdata/<이름>`, 재생 거부 표본 `refusal/<이름>`이다. 퍼즐 번호 키는 문자열(`"1"`)이다.
 - 제외: `sha256`, 힌트(미공개·본문), `next_object_id`(전면 금지), `failed`가 아닌 퍼즐의 `answer`·`next_instruction`, `tone`, `reason`, 대화문 `contains_hint`.
 
 ## Rendering Contract

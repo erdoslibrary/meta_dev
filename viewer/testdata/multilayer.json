@@ -6,8 +6,8 @@
   "events": [
     { "t": 1, "puzzle": 1, "type": "move", "value": "1F-A1" },
     { "t": 2, "puzzle": 1, "type": "move", "value": "1F-B2" },
-    { "t": 3, "puzzle": 1, "type": "move", "value": "2F-C4" },
-    { "t": 4, "puzzle": 1, "type": "view", "value": "signboard@2F-C4" },
+    { "t": 3, "puzzle": 1, "type": "move", "value": "2F-B2" },
+    { "t": 4, "puzzle": 1, "type": "view", "value": "signboard@2F-B2" },
     { "t": 5, "puzzle": 1, "type": "npc_dialogue", "npc": "drunkard" },
     { "t": 6, "puzzle": 1, "type": "answer_submitted", "value": "spiral", "attempt": 1, "correct": true, "reason": "oracle: known answer" },
     { "t": 7, "puzzle": 1, "type": "puzzle_ended", "result": "solved_by_dialogue", "attempts_used": 1 },

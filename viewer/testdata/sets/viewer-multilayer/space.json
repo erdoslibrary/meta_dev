@@ -4,45 +4,39 @@
     {
       "id": "1F",
       "walls": [
-        { "from": { "x": 0, "y": 600 }, "to": { "x": 600, "y": 600 } },
-        { "from": { "x": 600, "y": 600 }, "to": { "x": 600, "y": 0 } },
-        { "from": { "x": 600, "y": 0 }, "to": { "x": 0, "y": 0 } },
-        { "from": { "x": 0, "y": 600 }, "to": { "x": 0, "y": 0 } }
+        { "from": { "x": 0, "y": 300 }, "to": { "x": 300, "y": 300 } }
       ],
       "doors": [
-        { "id": "door-1", "from": { "x": 100, "y": 600 }, "to": { "x": 190, "y": 600 } }
+        { "id": "door-1f", "from": { "x": 10, "y": 300 }, "to": { "x": 100, "y": 300 } }
       ],
       "meters_per_pixel": 0.01,
-      "origin_px": { "x": 0, "y": 600 },
-      "columns": 6,
-      "rows": 6
+      "origin_px": { "x": 0, "y": 300 },
+      "columns": 3,
+      "rows": 3
     },
     {
       "id": "2F",
       "walls": [
-        { "from": { "x": 0, "y": 600 }, "to": { "x": 600, "y": 600 } },
-        { "from": { "x": 600, "y": 600 }, "to": { "x": 600, "y": 0 } },
-        { "from": { "x": 600, "y": 0 }, "to": { "x": 0, "y": 0 } },
-        { "from": { "x": 0, "y": 600 }, "to": { "x": 0, "y": 0 } }
+        { "from": { "x": 0, "y": 300 }, "to": { "x": 300, "y": 300 } }
       ],
       "doors": [
-        { "id": "door-2", "from": { "x": 100, "y": 600 }, "to": { "x": 190, "y": 600 } }
+        { "id": "door-2f", "from": { "x": 10, "y": 300 }, "to": { "x": 100, "y": 300 } }
       ],
       "meters_per_pixel": 0.01,
-      "origin_px": { "x": 0, "y": 600 },
-      "columns": 6,
-      "rows": 6
+      "origin_px": { "x": 0, "y": 300 },
+      "columns": 27,
+      "rows": 3
     }
   ],
   "rooms": [
-    { "name": "1층 휴게실 앞", "cells": "A1:F6" },
-    { "name": "2층 복도", "cells": "A1:F6" }
+    { "name": "1층 휴게실 앞", "cells": "1F-A1:C3" },
+    { "name": "2층 복도", "cells": "2F-A1:AA3" }
   ],
   "objects": [
     {
-      "id": "signboard@2F-C4",
+      "id": "signboard@2F-B2",
       "label": "2층 안내판",
-      "cells": "2F-C4",
+      "cells": "2F-B2",
       "description": "2층 복도 벽면에 붙어 있는 안내판.",
       "photos": ["signboard.jpg"],
       "state": "open"
