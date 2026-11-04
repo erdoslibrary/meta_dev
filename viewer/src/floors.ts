@@ -1,69 +1,49 @@
-/* Floor views: one group per floor prefix; selector hidden when single. */
-import { LogEvent, SpaceData } from "./types";
-import { buildFloorPlane } from "./plane";
-import { buildTrail } from "./trail";
+/* Floor grouping by cell prefix (global script). Prefix-less cells attach
+   to the single floor. Group-visibility switching shows only the active
+   floor's moves and observations. */
 
-export interface FloorView {
-  id: string;
-  group: THREE.Group;
+/** "2F-C4" -> "2F", "C4" -> "". */
+function floorKeyOfCell(cell: string): string {
+  const dash = cell.indexOf("-");
+  return dash >= 0 ? cell.slice(0, dash) : "";
 }
 
-/** "2F-C4" -> "2F", "C4" -> null. */
-export function floorOf(cell: string): string | null {
-  const i = cell.indexOf("-");
-  return i < 0 ? null : cell.slice(0, i);
-}
-
-function fallbackFloor(id: string, like: { columns: number; rows: number }) {
-  const n = like.columns * 100;
-  return {
-    id,
-    walls: [
-      { from: { x: 0, y: n }, to: { x: n, y: n } },
-      { from: { x: n, y: n }, to: { x: n, y: 0 } },
-      { from: { x: n, y: 0 }, to: { x: 0, y: 0 } },
-      { from: { x: 0, y: 0 }, to: { x: 0, y: n } },
-    ],
-    doors: [],
-    meters_per_pixel: 0.01,
-    origin_px: { x: 0, y: n },
-    columns: like.columns,
-    rows: like.rows,
-  };
-}
-
-/** Build one view per floor; views after the first start hidden. */
-export function buildFloorViews(
-  space: SpaceData,
-  startCell: string,
-  events: LogEvent[],
-): FloorView[] {
-  const moves = events.filter((e) => e.type === "move").map((e) => String(e.value));
-  const prefixes: (string | null)[] = [];
-  for (const c of [startCell, ...moves]) {
-    const f = floorOf(c);
-    if (!prefixes.includes(f)) prefixes.push(f);
+/** Floor key for a spatial event, null for floor-agnostic events. */
+function eventFloor(e: LogEvent): string | null {
+  if (e.type === "move") return floorKeyOfCell((e as MoveEvent).value);
+  if (e.type === "view") {
+    const v = (e as ViewEvent).value;
+    const at = v.indexOf("@");
+    return floorKeyOfCell(at >= 0 ? v.slice(at + 1) : v);
   }
-  const base = space.floors[0];
-  const end = events[events.length - 1];
-  return prefixes.map((prefix, i) => {
-    const id = prefix ?? base.id;
-    const def = space.floors.find((f) => f.id === id) ?? fallbackFloor(id, base);
-    const group = new THREE.Group();
-    group.name = "floorview-" + id;
-    group.add(buildFloorPlane(def));
-    const cells = [startCell, ...moves].filter((c) => floorOf(c) === prefix);
-    const leg: LogEvent[] = cells.slice(1).map((c, k) => ({
-      t: k + 1, puzzle: 1, type: "move", value: c,
-    }));
-    if (end.type === "end") leg.push({ ...end, t: leg.length + 1 });
-    group.add(buildTrail(cells[0], leg).group);
-    group.visible = i === 0;
-    return { id, group };
-  });
+  return null;
 }
 
-/** Show only the named floor view. */
-export function showFloor(views: FloorView[], id: string): void {
-  for (const v of views) v.group.visible = v.id === id;
+/** Floors present in the log (start cell first), in order of appearance. */
+function logFloors(log: RunLog, startCell: string): string[] {
+  const out: string[] = [];
+  const push = (key: string): void => {
+    if (out.indexOf(key) < 0) out.push(key);
+  };
+  push(floorKeyOfCell(startCell));
+  for (const e of log.events) {
+    const f = eventFloor(e);
+    if (f !== null) push(f);
+  }
+  return out;
+}
+
+/** Match a floor key to a space floor (prefix-less goes to the single floor). */
+function floorForKey(space: SpaceData, key: string): SpaceFloor | null {
+  if (!space.floors.length) return null;
+  if (key === "") return space.floors[0];
+  for (const floor of space.floors) {
+    if (floor.id === key) return floor;
+  }
+  return null;
+}
+
+/** Display label for a floor key. */
+function floorLabel(key: string): string {
+  return key === "" ? "단층" : key;
 }

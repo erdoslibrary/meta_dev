@@ -2,6 +2,9 @@
 
 **Date**: 2026-11-04 | **Spec**: [spec.md](spec.md) | **Notes**: [implementation-notes.md](implementation-notes.md)
 
+**변경 사유 (2026-11-04)**: 결정 C·D 표현 정리와 배포 묶음 일치를 반영. R-5 배포 묶음을 T029와 일치시키고(`index.html`·`data/<set>/` 사진 포함)(권장 7), R-8의 "막힘/stuck" 표현을 "끊김·실패"로 통일하고 Seal Red 적용 대상을 `puzzle_ended(failed)`·`end(action_limit)`·`end(api_error)` 세 가지로 한정한다(권장 6).
+**변경 사유 (2026-11-04)**: R-2 생성 스크립트 규칙을 반영. `embed.py`는 표준 라이브러리 + `jsonschema`만 허용하고(새 패키지 설치 없음) `.venv/bin/python`으로 실행한다(항목 3).
+
 ## R-1: 뷰어 폴더 이름
 
 - **Decision**: `viewer/`를 쓴다.
@@ -10,7 +13,7 @@
 
 ## R-2: 로그·데이터 읽기 방식 (FR-001, 헌법 II)
 
-- **Decision**: 하이브리드. (a) 기본 표본은 빌드 시 생성한 `viewer/dist/data.js`를 일반 `<script src>`로 로드해 `window.RT_DATA`로 읽는다. 생성 스크립트는 표준 라이브러리만 쓰는 `viewer/tools/embed.py`로 tasks에서 구현한다. (b) 임의 로그는 `<input type="file">` + `FileReader`로 추가 로드한다. `fetch`·XHR 로컬 파일 읽기는 쓰지 않는다.
+- **Decision**: 하이브리드. (a) 기본 표본은 빌드 시 생성한 `viewer/dist/data.js`를 일반 `<script src>`로 로드해 `window.RT_DATA`로 읽는다. 생성 스크립트 `viewer/tools/embed.py`는 표준 라이브러리 + `jsonschema`만 허용하고(새 패키지 설치 없음) `.venv/bin/python`으로 실행하며, tasks에서 구현한다. (b) 임의 로그는 `<input type="file">` + `FileReader`로 추가 로드한다. `fetch`·XHR 로컬 파일 읽기는 쓰지 않는다.
 - **Rationale**: Chrome 146 `file://` 시험(`implementation-notes.md` §1)에서 `fetch` 로컬 JSON 읽기는 CORS 차단, `<img>` 표시와 일반 `<script src>`는 동작이 확인됐다. 생성 JS는 열자마자 오라클 재생이 보여 데모·심사(PRD SC-4)에 유리하고, 파일 선택은 5회 미달 표본 밖의 임의 로그(US1 독립 테스트)에 필요하다. 둘 다 ES 모듈·importmap 없이 동작한다.
 - **Alternatives considered**: 파일 선택만 — 매번 여러 파일(로그+공간+퍼즐)을 골라야 해 US1 3분 확인(SC-001)에 불리해 기각. 생성 JS만 — 임의 로그 확인이 막혀 US1 독립 테스트가 어려워 기각. `fetch` — 시험에서 차단이 확인돼 기각.
 
@@ -28,7 +31,7 @@
 
 ## R-5: 배포 방식 (FR-007 위임 결정)
 
-- **Decision**: 컴파일 JS 커밋. `viewer/dist/app.js` + `viewer/dist/data.js` + `viewer/vendor/three.cjs`를 git에 넣고, `viewer/node_modules`와 `.shots`는 커밋하지 않는다. GitHub Action 빌드는 쓰지 않는다.
+- **Decision**: 컴파일 JS 커밋. 배포 묶음은 `viewer/index.html` + `viewer/dist/app.js` + `viewer/dist/data.js` + `viewer/vendor/three.cjs` + `data/<set>/` 사진(T029)이며 이를 git에 넣고, `viewer/node_modules`와 `.shots`는 커밋하지 않는다. GitHub Action 빌드는 쓰지 않는다.
 - **Rationale**: PRD SC-4(API 키 없이 저장된 파일로 결과 재열람)와 `file://` 오프라인 요구에 가장 단순히 부합한다. Action 빌드는 추가 인프라·마감 리스크만 늘린다. TS 원본도 함께 커밋해 재현 가능성을 유지한다.
 - **Alternatives considered**: Action 빌드 — 심사·데모 환경에서 빌드 대기·실패 경로가 늘어 기각. 서버 방식 — 헌법 개정 없이는 선택 불가해 제외.
 
@@ -46,6 +49,6 @@
 
 ## R-8: 디자인 토큰 적용
 
-- **Decision**: spec Design Direction 토큰을 그대로 쓴다. Base `#E9DCC0`–`#DCCFAC`, Ink `#2A2118`, Seal Red `#A0322B`(막힘·실패 구간만), 시스템 세리프, 웹폰트 없음, SVG `stroke-dashoffset` 먹 궤적(라이브러리 없음), 미탐험 흐림·탐험 선명, 양피지 질감은 코드 생성 `CanvasTexture`.
+- **Decision**: spec Design Direction 토큰을 그대로 쓴다. Base `#E9DCC0`–`#DCCFAC`, Ink `#2A2118`, Seal Red `#A0322B`(끊김·실패 구간만 — `puzzle_ended(failed)`·`end(action_limit)`·`end(api_error)`, 랜딩 화면 예외), 시스템 세리프, 웹폰트 없음, 지도 궤적 `Line`+`Points`, SVG `stroke-dashoffset` 먹 궤적은 랜딩 화면에만(라이브러리 없음), 미탐험 흐림·탐험 선명, 양피지 질감은 코드 생성 `CanvasTexture`.
 - **Rationale**: spec이 확정했고 오프라인(외부 폰트·이미지 없음) 요구와 일치한다.
 - **Alternatives considered**: 없음. spec 확정 사항이다.

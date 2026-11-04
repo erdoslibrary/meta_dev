@@ -1,37 +1,77 @@
-/* Ghost: ordered playback state over start -> move -> view -> npc -> submit -> hint/end. */
-import { LogEvent } from "./types";
+/* Ordered playback state (global script). start -> move -> view ->
+   npc_dialogue -> answer_submitted -> (hint_revealed | puzzle_ended) ->
+   next puzzle or end. */
 
-export class GhostPlayer {
-  private idx = 0;
-  readonly events: LogEvent[];
+interface SubmissionResult {
+  value: string;
+  correct: boolean;
+  puzzle: number;
+}
+
+interface GhostState {
+  t: number;
+  puzzle: number;
+  cell: string;
+  opened: string[];
+  submission: SubmissionResult | null;
+  result: string | null;
+  done: boolean;
+}
+
+class Ghost {
+  readonly log: RunLog;
   readonly startCell: string;
-  position: string;
+  private idx = 0;
+  private cell: string;
+  private opened: string[] = [];
+  private submission: SubmissionResult | null = null;
+  private result: string | null = null;
 
-  constructor(startCell: string, events: LogEvent[]) {
+  constructor(log: RunLog, startCell: string) {
+    this.log = log;
     this.startCell = startCell;
-    this.events = events;
-    this.position = startCell;
+    this.cell = startCell;
   }
 
   reset(): void {
     this.idx = 0;
-    this.position = this.startCell;
+    this.cell = this.startCell;
+    this.opened = [];
+    this.submission = null;
+    this.result = null;
   }
 
-  get done(): boolean {
-    return this.idx >= this.events.length;
-  }
-
-  get step(): number {
-    return this.idx;
-  }
-
-  /** Advance one event; move events update position. Returns null at end. */
+  /** Apply the next event; null when the log is exhausted. */
   next(): LogEvent | null {
-    if (this.done) return null;
-    const ev = this.events[this.idx];
+    if (this.idx >= this.log.events.length) return null;
+    const e = this.log.events[this.idx];
     this.idx++;
-    if (ev.type === "move" && ev.value) this.position = ev.value;
-    return ev;
+    if (e.type === "move") {
+      this.cell = (e as MoveEvent).value;
+    } else if (e.type === "view") {
+      const v = (e as ViewEvent).value;
+      if (this.opened.indexOf(v) < 0) this.opened.push(v);
+    } else if (e.type === "answer_submitted") {
+      const a = e as AnswerSubmittedEvent;
+      this.submission = { value: a.value, correct: a.correct, puzzle: a.puzzle };
+    } else if (e.type === "puzzle_ended") {
+      this.result = (e as PuzzleEndedEvent).result;
+    }
+    return e;
+  }
+
+  state(): GhostState {
+    const events = this.log.events;
+    const cur = events[Math.min(this.idx, events.length - 1)];
+    const last = events[events.length - 1];
+    return {
+      t: this.idx,
+      puzzle: cur ? cur.puzzle : 1,
+      cell: this.cell,
+      opened: this.opened.slice(),
+      submission: this.submission,
+      result: this.result,
+      done: this.idx >= events.length && !!last && last.type === "end",
+    };
   }
 }

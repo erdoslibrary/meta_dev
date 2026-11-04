@@ -219,7 +219,8 @@
 
 - 기준은 `log.schema.json`. `t`는 이벤트 순번. 1부터 1씩 증가. 마지막만 `end`.
 - 갈래 2가 로그에서 읽는 것: `npc_dialogue.npc`, `view` 뒤 `npc_dialogue`(AR 반응), `answer_submitted`, `puzzle_ended.result`, `move.value` 발자국.
-- 갈래 2가 `data/<set>/`에서 읽는 것: `start_cell` 시작점, `dialogue`, `on_wrong`/`on_correct`(화면 전용), `failed` 퍼즐의 `answer`(`puzzle.json`). 평면도와 사물 사진(`space.json`). NPC 이름과 이미지(`npc.json`).
+- 갈래 2가 `data/<set>/`에서 읽는 것: `start_cell` 시작점, `dialogue`, `on_wrong`/`on_correct`(화면 전용), `failed` 퍼즐의 `answer`·`next_instruction`(`puzzle.json`). 평면도와 사물 사진(`space.json`). NPC 이름과 이미지(`npc.json`).
+- 변경 사유(2026-11-04): 사용자 결정으로 갈래 2 읽기 목록에 `failed` 퍼즐의 `next_instruction`을 추가한다. 스키마와 로그 형식은 바꾸지 않는다.
 
 ## 8. 보고서 분담
 

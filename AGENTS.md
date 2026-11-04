@@ -8,7 +8,7 @@
 - `requirement.md` — speckit-specify 입력.
 - `.specify/memory/constitution.md` (v1.2.0) — 테스트·스택·보안 원칙.
 - `specs/002-map-ghost-viewer/implementation-notes.md` — 002 plan과 구현 세션 시작 시 읽는다. 시험 근거, 빌드 후보, 시작 지시문. 위 문서와 다르면 위 문서가 우선한다.
-- TRD §11 미결 사항은 결정하지 않는다. 예외: 문서가 plan에 위임한 배포 방식(TRD §9·§11, spec FR-007)과 주문·잉크 수용 시나리오(TRD §9, spec FR-006)는 002 plan에서 정한다. 주문 주체와 화면 범위는 미결로 두고 주문 연출 착수 시 묻는다.
+- TRD §11 미결 사항은 결정하지 않는다. 예외: 문서가 plan에 위임한 배포 방식(TRD §9·§11, spec FR-007)과 주문·잉크 수용 시나리오(TRD §9, spec FR-006)는 002 plan에서 정한다. 주문 주체와 화면 범위는 PRD OPEN-4 결정(2026-11-04: 실행자 본인이 외우는 듯한 연출, 진입 전 랜딩 화면)으로 확정됐다. (2026-11-04 변경 사유: PRD OPEN-4 결정 반영. OPEN-4 반영에 한해 docs/TRD.md는 수정하지 않는다.)
 
 ## 디렉토리 규약
 

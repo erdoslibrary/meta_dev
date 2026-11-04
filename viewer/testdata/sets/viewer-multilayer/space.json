@@ -1,0 +1,51 @@
+{
+  "space_id": "viewer-multilayer-space",
+  "floors": [
+    {
+      "id": "1F",
+      "walls": [
+        { "from": { "x": 0, "y": 600 }, "to": { "x": 600, "y": 600 } },
+        { "from": { "x": 600, "y": 600 }, "to": { "x": 600, "y": 0 } },
+        { "from": { "x": 600, "y": 0 }, "to": { "x": 0, "y": 0 } },
+        { "from": { "x": 0, "y": 600 }, "to": { "x": 0, "y": 0 } }
+      ],
+      "doors": [
+        { "id": "door-1", "from": { "x": 100, "y": 600 }, "to": { "x": 190, "y": 600 } }
+      ],
+      "meters_per_pixel": 0.01,
+      "origin_px": { "x": 0, "y": 600 },
+      "columns": 6,
+      "rows": 6
+    },
+    {
+      "id": "2F",
+      "walls": [
+        { "from": { "x": 0, "y": 600 }, "to": { "x": 600, "y": 600 } },
+        { "from": { "x": 600, "y": 600 }, "to": { "x": 600, "y": 0 } },
+        { "from": { "x": 600, "y": 0 }, "to": { "x": 0, "y": 0 } },
+        { "from": { "x": 0, "y": 600 }, "to": { "x": 0, "y": 0 } }
+      ],
+      "doors": [
+        { "id": "door-2", "from": { "x": 100, "y": 600 }, "to": { "x": 190, "y": 600 } }
+      ],
+      "meters_per_pixel": 0.01,
+      "origin_px": { "x": 0, "y": 600 },
+      "columns": 6,
+      "rows": 6
+    }
+  ],
+  "rooms": [
+    { "name": "1층 휴게실 앞", "cells": "A1:F6" },
+    { "name": "2층 복도", "cells": "A1:F6" }
+  ],
+  "objects": [
+    {
+      "id": "signboard@2F-C4",
+      "label": "2층 안내판",
+      "cells": "2F-C4",
+      "description": "2층 복도 벽면에 붙어 있는 안내판.",
+      "photos": ["signboard.jpg"],
+      "state": "open"
+    }
+  ]
+}

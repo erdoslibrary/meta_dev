@@ -1,44 +1,70 @@
-/* Floor plane from space.json (PlaneGeometry, 1 cell = 100 units). */
-import { SpaceFloor } from "./types";
-import { BASE_FROM, parchmentTexture } from "./theme";
-
-const CELL = 100;
-
-/** "C4" -> center coords; "2F-C4" strips the floor prefix. */
-export function cellToXY(cell: string): { x: number; y: number } {
-  const bare = cell.includes("-") ? cell.split("-").pop()! : cell;
-  const m = /^([A-Z]+)([0-9]+)$/.exec(bare);
-  if (!m) throw new Error("bad cell: " + cell);
-  const col = lettersToIndex(m[1]);
-  const row = parseInt(m[2], 10);
-  return { x: (col + 0.5) * CELL, y: (row - 0.5) * CELL };
-}
+/* Floor planes from space.json (global script). 1 cell = 1 m. */
 
 function lettersToIndex(letters: string): number {
   let n = 0;
-  for (const ch of letters) n = n * 26 + (ch.charCodeAt(0) - 64);
+  for (let i = 0; i < letters.length; i++) {
+    n = n * 26 + (letters.charCodeAt(i) - 64);
+  }
   return n - 1;
 }
 
-/** Floor plane with walls; centered at the grid middle for the camera. */
-export function buildFloorPlane(floor: SpaceFloor): THREE.Group {
+/** "2F-C4" -> "2F", "C4" -> null. */
+function floorOf(cell: string): string | null {
+  const dash = cell.indexOf("-");
+  return dash >= 0 ? cell.slice(0, dash) : null;
+}
+
+function parseCell(cell: string): { col: number; row: number } {
+  const bare = cell.indexOf("-") >= 0 ? cell.split("-").pop() as string : cell;
+  const m = /^([A-Z]+)([0-9]+)$/.exec(bare);
+  if (!m) throw new Error("bad cell: " + cell);
+  return { col: lettersToIndex(m[1]), row: parseInt(m[2], 10) - 1 };
+}
+
+/** Cell center in meters, grid centered at origin. */
+function cellToXY(cell: string, columns: number, rows: number): { x: number; z: number } {
+  const c = parseCell(cell);
+  return { x: c.col - (columns - 1) / 2, z: (rows - 1) / 2 - c.row };
+}
+
+function pxToWorld(
+  px: SpacePoint, floor: SpaceFloor
+): { x: number; z: number } {
+  const mpp = floor.meters_per_pixel;
+  return {
+    x: (px.x - floor.origin_px.x) * mpp - floor.columns / 2,
+    z: (px.y - floor.origin_px.y) * mpp + floor.rows / 2,
+  };
+}
+
+/** One floor plane with walls. Unexplored = desaturated + translucent. */
+function buildFloorPlane(floor: SpaceFloor, explored: boolean): THREE.Group {
   const group = new THREE.Group();
-  group.name = "floor-" + floor.id;
-  const w = floor.columns * CELL;
-  const h = floor.rows * CELL;
-  const geo = new THREE.PlaneGeometry(w, h);
-  const mat = new THREE.MeshBasicMaterial({ map: parchmentTexture(), color: BASE_FROM });
+  const geo = new THREE.PlaneGeometry(floor.columns, floor.rows);
+  const mat = new THREE.MeshBasicMaterial({ map: parchmentTexture() });
+  if (!explored) {
+    mat.color.set("#8a8378");
+    mat.transparent = true;
+    mat.opacity = 0.55;
+  }
   const plane = new THREE.Mesh(geo, mat);
-  plane.position.set(w / 2, h / 2, 0);
+  plane.rotation.x = -Math.PI / 2;
   group.add(plane);
 
-  const wallMat = new THREE.LineBasicMaterial({ color: 0x2a2118 });
-  // Space px coords grow downward; scene coords grow upward (A1 bottom-left).
-  const flip = (p: { x: number; y: number }) =>
-    new THREE.Vector3(p.x, floor.rows * CELL - p.y, 1);
-  for (const wall of [...floor.walls, ...floor.doors]) {
-    const g = new THREE.BufferGeometry().setFromPoints([flip(wall.from), flip(wall.to)]);
-    group.add(new THREE.Line(g, wallMat));
+  const pts: number[] = [];
+  const push = (p: SpacePoint): void => {
+    const w = pxToWorld(p, floor);
+    pts.push(w.x, 0.02, w.z);
+  };
+  for (const wall of floor.walls) {
+    push(wall.from);
+    push(wall.to);
   }
+  const wallGeo = new THREE.BufferGeometry();
+  wallGeo.setAttribute("position", new THREE.Float32BufferAttribute(pts, 3));
+  const wallMat = new THREE.LineBasicMaterial({
+    color: explored ? INK_MAIN : "#6a655c",
+  });
+  group.add(new THREE.LineSegments(wallGeo, wallMat));
   return group;
 }

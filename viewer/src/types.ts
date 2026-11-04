@@ -1,85 +1,90 @@
-/* Shared log + static-data types (read-only; engine/log formats unchanged). */
+/* Log event + static-data types (global script, no import/export). */
 
-export type EventType =
-  | "move" | "view" | "npc_dialogue" | "answer_submitted"
-  | "hint_revealed" | "puzzle_ended" | "rejected" | "end";
+type MoveValue = string;
+type ObjectRef = string;
+type NpcId = string;
 
-export interface LogEvent {
-  t: number;
-  puzzle: number;
-  type: EventType;
-  value?: string | null;
-  npc?: string;
-  attempt?: number;
-  correct?: boolean;
-  reason?: string;
-  level?: number;
-  result?: "solved_by_dialogue" | "solved_with_hint" | "failed";
-  attempts_used?: number;
-  attempted_action?: string | null;
-  error?: string;
-  outcome?: "completed" | "action_limit" | "api_error";
+interface MoveEvent {
+  t: number; puzzle: number; type: "move"; value: MoveValue;
+}
+interface ViewEvent {
+  t: number; puzzle: number; type: "view"; value: ObjectRef;
+}
+interface NpcDialogueEvent {
+  t: number; puzzle: number; type: "npc_dialogue"; npc: NpcId;
+}
+interface AnswerSubmittedEvent {
+  t: number; puzzle: number; type: "answer_submitted";
+  value: string; attempt: number; correct: boolean;
+}
+interface HintRevealedEvent {
+  t: number; puzzle: number; type: "hint_revealed"; level: number;
+}
+interface PuzzleEndedEvent {
+  t: number; puzzle: number; type: "puzzle_ended";
+  result: "solved_by_dialogue" | "solved_with_hint" | "failed";
+  attempts_used: number;
+}
+interface RejectedEvent {
+  t: number; puzzle: number; type: "rejected";
+  attempted_action: string | null; error: string; value?: string | null;
+}
+interface EndEvent {
+  t: number; puzzle: number; type: "end";
+  outcome: "completed" | "action_limit" | "api_error";
+}
+type LogEvent =
+  | MoveEvent | ViewEvent | NpcDialogueEvent | AnswerSubmittedEvent
+  | HintRevealedEvent | PuzzleEndedEvent | RejectedEvent | EndEvent;
+
+interface Persona {
+  age: number; job: string; vocab: string; thinking: string; name?: string;
+}
+interface RunLog {
+  run_id: string; persona: Persona; puzzle_set_id: string;
+  model: string; seed?: number; events: LogEvent[];
 }
 
-export interface RunLog {
-  run_id: string;
-  persona: unknown;
-  puzzle_set_id: string;
-  model: string;
-  seed?: number;
-  events: LogEvent[];
+interface SpacePoint { x: number; y: number; }
+interface SpaceWall { from: SpacePoint; to: SpacePoint; }
+interface SpaceDoor { id: string; from: SpacePoint; to: SpacePoint; }
+interface SpaceFloor {
+  id?: string; walls: SpaceWall[]; doors: SpaceDoor[];
+  origin_px: SpacePoint; meters_per_pixel: number;
+  columns: number; rows: number; background_image?: string;
+}
+interface SpaceRoom { name: string; cells: string; }
+interface SpaceObject {
+  id: string; cells: string; photos: string[]; label: string;
+}
+interface SpaceData {
+  space_id: string; floors: SpaceFloor[];
+  rooms: SpaceRoom[]; objects: SpaceObject[];
 }
 
-export interface SpaceFloor {
-  id: string;
-  walls: { from: { x: number; y: number }; to: { x: number; y: number } }[];
-  doors: { id: string; from: { x: number; y: number }; to: { x: number; y: number } }[];
-  meters_per_pixel: number;
-  origin_px: { x: number; y: number };
-  columns: number;
-  rows: number;
+interface PuzzleDialogue { text: string; contains_hint: boolean; }
+interface PuzzleEntry {
+  number: number; object_id: string; npc: string;
+  question?: string; dialogue?: PuzzleDialogue[];
+  on_wrong: string; on_correct: string;
+  image?: { path: string };
+  answer?: string; next_instruction?: string | null;
+  answer_letter_count?: number; max_attempts?: number;
 }
-
-export interface SpaceData {
-  space_id: string;
-  floors: SpaceFloor[];
-  rooms: { name: string; cells: string }[];
-  objects: {
-    id: string; label: string; cells: string;
-    description: string; photos: string[]; state: string;
-  }[];
+interface PuzzleData {
+  puzzle_set_id: string; space_id: string; start_cell: string;
+  start_instruction?: string; puzzles: PuzzleEntry[];
 }
+interface NpcData { id: string; name: string; image: string; }
 
-export interface PuzzleData {
-  puzzle_set_id: string;
-  space_id: string;
-  start_cell: string;
-  puzzles: {
-    number: number;
-    object_id: string;
-    npc: string;
-    dialogue: { text: string; contains_hint: boolean }[];
-    on_wrong: string;
-    on_correct: string;
-    answer: string;
-  }[];
+interface SetBundle {
+  space: SpaceData; puzzle: PuzzleData; npc: NpcData;
+  logs: { [key: string]: RunLog };
 }
-
-export interface NpcData {
-  id: string;
-  name: string;
-  image: string;
-  tone: string;
-}
-
-export interface SetBundle {
-  space: SpaceData;
-  puzzle: PuzzleData;
-  npc: NpcData;
-  logs: Record<string, RunLog>;
-}
-
-export interface RtData {
-  sets: Record<string, SetBundle>;
-  testdata: Record<string, RunLog>;
+interface SampleSetBundle { space?: SpaceData; puzzle?: PuzzleData; npc?: NpcData; }
+interface RtData {
+  sets: { [setName: string]: SetBundle };
+  testdata: { [name: string]: RunLog };
+  refusal: { [name: string]: RunLog };
+  sample_sets: { [setId: string]: SampleSetBundle };
 }

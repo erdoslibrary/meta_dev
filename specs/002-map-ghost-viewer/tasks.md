@@ -6,6 +6,13 @@
 
 **분할 준수 (AGENTS.md)**: spec US 1개 = plan 슬라이스 1개 = tasks 페이즈 1개. 항목 1개 = 한 파일·한 모듈. `viewer/` 신규이므로 스토리별 페이즈로 분할하고 코드 작성 전 본 문서로 승인받는다.
 
+**변경 사유 (2026-11-04)**: 검증 분리·결정 A 후속·범위 한정·순서 변경을 반영. T006에 `embed.py` 원본 검증 + 로그 헤더 필드 + `failed` 한정 `answer`·`next_instruction`을 명시하고(차단 1·2, 권장 8), T008에 내장/파일 선택 검증 분리를 명시하며(차단 1), T036 범위를 스키마 통과 요구 로그 표본으로 한정하고 `persona`·`space`·`npc` `$ref`를 포함시키며(차단 3), T035·T036을 구현 항목보다 먼저 실행하도록 Phase 2 순서를 바꾸고(차단 4), T009에 `puzzle.json` 파일 입력을 맡기며(차단 5), T017·T022를 한 항목 = 한 파일·한 모듈 규칙에 맞게 나누고 코드 연결 항목에서 `[P]`를 뺀다(권장 9). `next_instruction` 전면 금지를 `failed` 직후 1회 표시로 교체한다(차단 2).
+**변경 사유 (2026-11-04)**: 검증 규칙 3건을 반영. 재생 거부 표본은 `embed.py` 스키마 검증·`data.js` 미생성 규칙에서 제외하고 `data.js`에 포함하며 브라우저 거부 표시는 V-2에서 확인한다(항목 1). T008 자필 검증은 재생 필요 항목으로 한정하고 파일 선택 "전체 검증"을 이 범위로 고친다(항목 2). `embed.py`는 표준 라이브러리 + `jsonschema`만 허용하고 `.venv/bin/python`으로 실행한다(항목 3).
+**변경 사유 (2026-11-04)**: 표본 구조·검증 게이트를 확정. FR-001·TRD에 `failed` 퍼즐의 `next_instruction` 허용을 추가하고(차단 1), `failed.json`·`multilayer.json` 스키마 수정(persona 값 포함)을 T042·T043으로 T036 뒤·T037 앞에 둔다(차단 2). 재생 거부 표본은 결함 유지·`data.js` 규칙 동일 적용으로 고치고 T035 감사에 포함한다(차단 3). 표본 구조를 바로 아래 `*.json`·`refusal/`·`sets/<puzzle_set_id>/`로 정한다(차단 4). T040·T041을 정적 데이터(T040·T041)와 코드 연결(T044·T045, `dataload.ts` 명시)로 나눈다(권장 5).
+**변경 사유 (2026-11-04)**: 표본 실물 대조 반영. `failed.json`·`multilayer.json`·`stuck-action-limit.json`이 이미 있어 T017·T022·T012를 생성에서 사용·검증으로 바꾸고 스키마 수정은 T042·T043에만 둔다. `persona.thinking` enum 위반 1건씩을 T042·T043에서 허용값으로 맞춘다. 사용자 승인(2026-11-04): failed.json thinking=연상을 따라감, puzzle_set_id=viewer-failed / multilayer.json thinking=문자 그대로 읽음, puzzle_set_id=viewer-multilayer.
+**변경 사유 (2026-11-04)**: 지시 1~15 문서 수정 반영. T042·T043은 thinking만 맡기고 puzzle_set_id 변경은 T046·T047로 옮기며 수정 뒤 embed.py·T036 재실행을 명시한다. 세트 탐색 규칙(sets→data, 중복·없음이면 미생성)을 T006에 넣고 T044·T045는 RT_DATA 내장 표본 사용으로 고친다. 허용 필드(퍼즐 number 등 7종, 대화문 text만)를 T006·T007에 넣고 실패 시 글자 붉은색은 '퍼즐 N 결과: failed' 줄에 둠(지도 궤적·고리 표시는 유지)을 T011·T019에 명시한다. T037에 T035·T036 실행·통과를 넣고 Phase 3~5 체크포인트에 V-1 재빌드를 추가한다. T040·T041에 [P]를 넣어 병렬 설명과 맞추고 T040·T044·T045·T018·T020 체크를 실제 상태에 맞춘다.
+**변경 사유 (2026-11-04)**: T040 퍼즐 2개 명시(1번 failed 값·2번 failed null)·[ ]로, T041 two-floors 맞춤 명시·[ ]로 되돌린다. 새 요구 미반영 코드 항목(T006·T007·T015·T019·T029·T031·T032)을 [ ]로 되돌리고 Dependencies에 T046·T047 순서를 명시한다.
+
 ## Format: `[ID] [P?] [Story] Description`
 
 - **[P]**: 병렬 가능 (다른 파일, 미완료 태스크에 의존 없음)
@@ -27,16 +34,26 @@
 
 **Purpose**: 모든 스토리가 의존하는 로딩·검증·장면 기반. 이 페이즈 완료 전 스토리 작업 금지.
 
+- `viewer/src/*.ts`는 `import`/`export` 없는 전역 스크립트로 한다(`three-global.d.ts`의 ambient 선언 제외).
+- `tsc` 통과 기준은 exit 0이 아니라 `viewer/dist/app.js` 생성과 내용 확인이다(T037).
+
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [X] T006 Create `viewer/tools/embed.py` using stdlib only: inputs `logs/drunkard-set/` + `data/drunkard-set/` + `viewer/testdata/`, output `viewer/dist/data.js` as single `window.RT_DATA = {...}` statement; embed photo paths only, never binaries
-- [X] T007 Create `viewer/src/types.ts` with log event types (`move.value`, `view.value`, `npc_dialogue.npc`, `answer_submitted.value/attempt/correct/reason`, `hint_revealed.level`, `puzzle_ended.result/attempts_used`, `rejected.attempted_action/error`, `end.outcome`) and static-data types (`space.json` floors/rooms/cells, `puzzle.json` dialogue/`on_wrong`/`on_correct`/`answer`/`start_cell`, `npc.json` name/image)
-- [X] T008 [P] Create `viewer/src/logparse.ts` validating schema pass plus `t` starting at 1 increasing by 1 with only the last event `end`; otherwise refuse playback with a reason (spec Edge Cases)
-- [X] T009 [P] Create `viewer/src/dataload.ts` reading built-in `window.RT_DATA` and ad-hoc logs via `<input type="file">` + `FileReader` only (no `fetch`/XHR local reads)
+- [X] T035 [P] Create `tests/` unittest for `embed.py` exposure (allowed/excluded fields per T006, `data.js` audit including playback-refusal samples; allowed includes `on_correct` and `answer_submitted.value`, banned target limited to `puzzle.json` `answer` field); run before implementation to confirm failure
+- [X] T036 [P] Create `tests/` unittest that the top-level `viewer/testdata/*.json` schema-required log samples pass `log.schema.json` with the `persona`·`space`·`npc` `$ref`s resolvable (static data files and playback-refusal samples excluded); run before implementation to confirm failure
+- [X] T042 [P] In `viewer/testdata/failed.json`, replace `persona.thinking` with `연상을 따라감` only (one file only; no other schema errors; sample-set static data stays in T040; `puzzle_set_id` change is T046 scope); fix after T036 Red so T036 passes at T037
+- [X] T043 [P] In `viewer/testdata/multilayer.json`, replace `persona.thinking` with `문자 그대로 읽음` only (one file only; no other schema errors; sample-set static data stays in T041; `puzzle_set_id` change is T047 scope); fix after T036 Red so T036 passes at T037
+- [ ] T006 Create `viewer/tools/embed.py` using stdlib plus `jsonschema` only (no new package install; run with `.venv/bin/python`, never bare `python`/`python3`; on environment failure report the original text without installing): inputs `logs/drunkard-set/` + `data/drunkard-set/` + `viewer/testdata/` (top-level `*.json` schema-required logs, `refusal/` playback-refusal samples, `sets/<puzzle_set_id>/` sample-set static data), output `viewer/dist/data.js` as single `window.RT_DATA = {...}` statement; first validate each schema-required log original (before `reason` removal) against `log.schema.json` and create no `data.js` on failure; playback-refusal samples are excluded from this gate but included in `data.js` with the same allow/exclude rules as other logs including `reason` removal (their `t` discontinuity and non-`end` last defects stay; browser refusal + reason display verified in V-2); embed photo paths only, never binaries; allowed log header fields: `run_id`, `persona`, `puzzle_set_id`, `model`, `seed` (optional), `events[]` (without `reason`); allowed fields otherwise: space geometry/rooms/objects, puzzle `number`/`start_instruction`/`question`/`object_id`/`image.path`/`answer_letter_count`/`max_attempts`/dialogue(`text` only, `contains_hint` excluded)/`on_wrong`/`on_correct`/`start_cell`, `answer` and `next_instruction` only for puzzles `failed` in that log (per-log; `next_instruction` `null` excluded from display), npc name/image, photo paths; excluded: `sha256`, hints, `next_object_id` (full ban), `answer`/`next_instruction` of non-`failed` puzzles, `tone`, `reason`, dialogue `contains_hint`; set lookup: resolve each log's `puzzle_set_id` against `sets/<id>` then `data/<id>`; if the same id exists in both or in neither, create no `data.js`; audit target includes `viewer/dist/data.js`; `referencing` is a `jsonschema` dependency, not a new package
+- [ ] T007 Create `viewer/src/types.ts` with log event types (`move.value`, `view.value`, `npc_dialogue.npc`, `answer_submitted.value/attempt/correct` (no `reason`), `hint_revealed.level` (level only), `puzzle_ended.result/attempts_used`, `rejected.attempted_action/error`, `end.outcome`) and static-data types (`space.json` top-level floors/rooms/cells plus rooms and objects(`id`, `cells`, `photos`, `label`), `puzzle.json` `number`/`start_instruction`/`question`/`object_id`/`image.path`/`answer_letter_count`/`max_attempts`/dialogue(`text` only, `contains_hint` excluded)/`on_wrong`/`on_correct`/`answer`/`next_instruction`/`start_cell`, `npc.json` name/image)
+- [X] T008 [P] Create `viewer/src/logparse.ts` with handwritten TS validation limited to playback needs (no library, runs in browser): log top-level required fields, event kinds and per-kind required fields, value types and enums, cell/object notation format, `t` order, last `end`; schema details unrelated to playback (e.g. `persona` content rules) are not checked. Built-in `window.RT_DATA` logs get `t` starting at 1 increasing by 1 with only the last event `end` only (`embed.py` already fully schema-validated the original except refusal samples); file-select logs get this limited scope (not full-schema) but `reason` is never displayed; otherwise refuse playback with a reason (spec Edge Cases)
+- [X] T009 [P] Create `viewer/src/dataload.ts` reading built-in `window.RT_DATA` and ad-hoc logs plus `puzzle.json` via `<input type="file">` + `FileReader` only (no `fetch`/XHR local reads, decision B)
 - [X] T010 Create `viewer/src/scene.ts` with `requestAnimationFrame` repeat rendering plus `webglcontextlost` → `preventDefault()` and `webglcontextrestored` → scene rebuild (no one-shot `render()` pages)
-- [X] T011 [P] Create `viewer/src/theme.ts` with tokens Base `#E9DCC0`–`#DCCFAC`, Ink `#2A2118`, Seal Red `#A0322B` (stuck/failed segments only), code-generated `CanvasTexture` parchment; photos render via `<img>`, never WebGL textures
+- [X] T011 [P] Create `viewer/src/theme.ts` with tokens Base `#E9DCC0`–`#DCCFAC`, Ink `#2A2118`, Seal Red `#A0322B` (끊김·실패 segments only: `puzzle_ended(failed)`, `end(action_limit)`, `end(api_error)`; landing screen excepted; on failure the red goes on the `퍼즐 N 결과: failed` line, the `정답: …` line stays default ink), code-generated `CanvasTexture` parchment; photos render via `<img>`, never WebGL textures
+- [X] T033 Create `viewer/src/main.ts` as the global-script entry starting after `DOMContentLoaded`; no cross-file top-level initialization depending on concatenation order
+- [X] T034 [P] Create `viewer/testdata/refusal/` playback-refusal samples (`t` discontinuity, last event not `end`) for logparse verification; excluded from the schema-sample requirement and from top-level `*.json` scope (spec Edge Cases); verified only in V-2 (refusal + reason display)
+- [X] T037 Run T035·T036 (`.venv/bin/python -m unittest tests.test_viewer_embed tests.test_viewer_testdata -v`) then `.venv/bin/python viewer/tools/embed.py` (never bare `python`/`python3`; no package install — on environment failure report the original text) then `viewer/node_modules/.bin/tsc -p viewer`; pass = T035·T036 pass plus `viewer/dist/app.js` created plus content check (not exit 0 alone)
 
-**Checkpoint**: Foundation ready — `embed.py` + scene/loading/validation modules exist; story implementation can now begin.
+**Checkpoint**: Foundation ready — `embed.py` + `main.ts` + scene/loading/validation modules + refusal samples + tests exist, `failed.json`·`multilayer.json` schema fixed (T042·T043) with T036 passing at T037, and `embed.py`/`tsc` outputs verified (T037); story implementation can now begin.
 
 ---
 
@@ -46,29 +63,34 @@
 
 **Independent Test**: `logs/drunkard-set/` 로그 1개로 전체 궤적을 순서대로 재생하고, 궤적 점 개수 = 해당 로그의 `move` 이벤트 수 + 1이면 통과 (quickstart V-2).
 
-- [X] T012 [P] [US1] Create `viewer/testdata/stuck-action-limit.json` as a `log.schema.json`-passing sample ending in `end(action_limit)` (kept out of `logs/<set>/`, FR-008)
-- [X] T013 [US1] Create `viewer/src/plane.ts` rendering floors from `space.json` as `PlaneGeometry` on the `columns`×`rows` grid (1 cell = 1m, `cellRef` pattern, `2F-C4`-style prefixes, `walls`/`doors`/`origin_px`/`meters_per_pixel`)
-- [X] T014 [US1] Create `viewer/src/trail.ts` drawing trajectory as `Line` plus footprints as `Points` with point count = `move` count + 1 (`start_cell` first), stuck segments in Seal Red `#A0322B`
-- [X] T015 [US1] Extend `viewer/src/main.ts` with US1 wiring loading built-in `RT_DATA` or a file-input log and driving `plane.ts` + `trail.ts` in `t` order with stuck-stop display
+- [X] T012 [P] [US1] Use the existing `viewer/testdata/stuck-action-limit.json`: verify it ends in `end(action_limit)`. Keep it out of `logs/<set>/` (FR-008)
+- [X] T038 [P] [US1] Create `viewer/testdata/api-error.json` as a `log.schema.json`-passing sample ending in `end(api_error)` (kept out of `logs/<set>/`, FR-008)
+- [X] T039 [P] [US1] Create `viewer/testdata/multi-move.json` as a `log.schema.json`-passing multi-move sample (kept out of `logs/<set>/`, FR-008)
+- [X] T013 [US1] Create `viewer/src/plane.ts` rendering floors from `space.json` as `PlaneGeometry` on the `columns`×`rows` grid (1 cell = 1m, `cellRef` pattern, `2F-C4`-style prefixes, prefix-less cells attach to the single floor, `walls`/`doors`/`origin_px`/`meters_per_pixel`); unexplored rooms blurred/desaturated, explored rooms sharp
+- [X] T014 [US1] Create `viewer/src/trail.ts` drawing trajectory as `Line` plus footprints as `Points` with point count = `move` count + 1 (`start_cell` first), 끊김·실패 segments (`puzzle_ended(failed)`, `end(action_limit)`, `end(api_error)`) in Seal Red `#A0322B` (landing screen excepted); `puzzle_ended` results marked on the trajectory (FR-004)
+- [ ] T015 [US1] Extend `viewer/src/main.ts` with US1 wiring loading built-in `RT_DATA` or a file-input log and driving `plane.ts` + `trail.ts` in `t` order with 끊김-stop display
 - [X] T016 [US1] Extend `viewer/index.html` with US1 playback controls and missing-photo empty-frame slots (trajectory/dialogue keep playing when photos are absent)
 
-**Checkpoint**: US1 fully functional and testable independently (V-2: both embedded-sample and file-input paths, stuck display).
+**Checkpoint**: US1 fully functional and testable independently (V-2: both embedded-sample and file-input paths, 끊김·실패 display; refusal and missing-photo cases per quickstart). Phase checkpoints run V-1 rebuild plus V-2, V-3, V-4 each time (applicable scope).
 
 ---
 
-## Phase 4: User Story 2 - 고스트 재생으로 막힌 지점 확인 (Priority: P2)
+## Phase 4: User Story 2 - 고스트 재생으로 끊김·실패 지점 확인 (Priority: P2)
 
-**Goal**: 1회 실행의 시간순 고스트 재생 — `view` 사진·`npc_dialogue`, 맞은 답·틀린 답, 화면 전용 반응, 퍼즐 종료 결과, `failed` 직후 정답 1회.
+**Goal**: 1회 실행의 시간순 고스트 재생 — `view` 사진·`npc_dialogue`, 맞은 답·틀린 답, 화면 전용 반응, 퍼즐 종료 결과, `failed` 직후 정답·`next_instruction` 1회(`null`이면 다음 장소 문구 없음).
 
 **Independent Test**: `logs/drunkard-set/oracle/r0.json` 재생이 전 퍼즐 `solved_by_dialogue`와 `end(completed)`까지 끊김 없이 보이면 통과 (quickstart V-3).
 
-- [X] T017 [P] [US2] Create `viewer/testdata/failed.json` as a `log.schema.json`-passing sample containing `puzzle_ended(failed)` (kept out of `logs/<set>/`, FR-008)
-- [X] T018 [US2] Create `viewer/src/ghost.ts` implementing ordered playback state (current `t`, puzzle number, cell, opened-object set, submission result, end result) over start → `move` → `view` → `npc_dialogue` → `answer_submitted` → (`hint_revealed` | `puzzle_ended`) → next puzzle or `end`
-- [X] T019 [US2] Create `viewer/src/panels.ts` showing at each `view` point the object photo (`<img>`) and `npc_dialogue`, per-puzzle `puzzle_ended.result`, `on_wrong`/`on_correct` in order, `answer_submitted.value` as submitted verbatim, and the matching `puzzle.json answer` exactly once right after `puzzle_ended(failed)`; never showing `next_object_id`, pre-completion `next_instruction`, photo paths/hashes, unreleased hints, or answers of non-`failed` puzzles (FR-005)
-- [X] T020 [US2] Extend `viewer/src/main.ts` with US2 ghost wiring driving `ghost.ts` + `panels.ts` over the US1 trajectory
-- [X] T021 [US2] Extend `viewer/index.html` with US2 ghost controls and result display regions
+- [X] T017 [P] [US2] Use the existing `viewer/testdata/failed.json` (schema fixed in T042): verify it contains `puzzle_ended(failed)`; edit only the log's cells/objects if needed to match T040 data. No schema fixes; keep it out of `logs/<set>/` (FR-008)
+- [ ] T040 [P] [US2] Create the `failed.json` matching sample-set static data in `viewer/testdata/sets/<puzzle_set_id>/` (linked by the log's `puzzle_set_id`); put 2 puzzles in `sets/viewer-failed/puzzle.json` (no. 1 `failed` with non-`null` `next_instruction`, no. 2 `failed` with `null` `next_instruction`); the sample log's cells and objects must match that set's static data
+- [ ] T046 [US2] Fix `viewer/testdata/failed.json` only: set `puzzle_set_id` to `viewer-failed` and add puzzle 2 events; after the fix re-run `embed.py` and T036
+- [ ] T044 [US2] Wire `viewer/src/dataload.ts` to use the `failed.json` sample-set static data embedded in `window.RT_DATA`
+- [ ] T018 [US2] Create `viewer/src/ghost.ts` implementing ordered playback state (current `t`, puzzle number, cell, opened-object set, submission result, end result) over start → `move` → `view` → `npc_dialogue` → `answer_submitted` → (`hint_revealed` | `puzzle_ended`) → next puzzle or `end`
+- [ ] T019 [US2] Create `viewer/src/panels.ts` showing at each `view` point the object photo (`<img>`) and `npc_dialogue`, per-puzzle `puzzle_ended.result`, `on_wrong` in order and `on_correct` right after a correct submission (next place and answer strings in the line shown verbatim), `answer_submitted.value` as submitted verbatim, `hint_revealed` level only (no hint body), and the matching `puzzle.json` `answer` with that puzzle's `next_instruction` exactly once right after `puzzle_ended(failed)` (`null` shows no next-place phrase; solved puzzles show no `next_instruction`, their next place comes via `on_correct`); file-input `failed` answers and `next_instruction` only when the log and `puzzle.json` are both selected, else "정답 데이터 없음" only with no next-place phrase; never showing `next_object_id` (full ban), photo paths/hashes, unreleased hints, `reason`, or answers of non-`failed` puzzles (FR-005, decision A/B); Seal Red goes on the `퍼즐 N 결과: failed` line, the `정답: …` line stays default ink
+- [ ] T020 [US2] Extend `viewer/src/main.ts` with US2 ghost wiring driving `ghost.ts` + `panels.ts` over the US1 trajectory
+- [X] T021 [US2] Extend `viewer/index.html` with US2 ghost controls (log + `puzzle.json` file selectors, decision B) and result display regions
 
-**Checkpoint**: US1 AND US2 both work independently (V-3: oracle uninterrupted, `failed` answer shown once, non-`failed` answers absent from screen and outputs).
+**Checkpoint**: US1 AND US2 both work independently (V-3: oracle uninterrupted, `failed` answer (`puzzle.json` `answer` field) shown once with `next_instruction` (`null` shows nothing), non-`failed` answers absent from screen and outputs; `on_correct` after correct submission and `answer_submitted.value` allowed; file-input rule per quickstart). Phase checkpoints run V-1 rebuild plus V-2, V-3, V-4 each time (applicable scope).
 
 ---
 
@@ -78,12 +100,15 @@
 
 **Independent Test**: 2층 표본 재생 시 층별 궤적이 각 층 평면에 표시되고 단층 로그에서는 층 UI가 없으면 통과 (quickstart V-4).
 
-- [X] T022 [P] [US3] Create `viewer/testdata/multilayer.json` as a `log.schema.json`-passing 2-floor sample with `2F-` style prefixed cells (kept out of `logs/<set>/`, FR-008)
-- [X] T023 [US3] Create `viewer/src/floors.ts` grouping floor planes by cell prefix with group-visibility switching so only the active floor's moves and observations show
+- [X] T022 [P] [US3] Use the existing `viewer/testdata/multilayer.json` (schema fixed in T043): verify `2F-`-style prefixed cells; edit only the log's cells/objects if needed to match T041 data. No schema fixes; keep it out of `logs/<set>/` (FR-008)
+- [ ] T041 [P] [US3] Create the `multilayer.json` matching sample-set static data in `viewer/testdata/sets/<puzzle_set_id>/` (linked by the log's `puzzle_set_id`); align `sets/viewer-multilayer/space.json` to the space in `docs/schemas/examples/valid/space.two-floors.json`; the sample log's cells and objects must match that set's static data
+- [ ] T047 [US3] Fix `viewer/testdata/multilayer.json` only: set `puzzle_set_id` to `viewer-multilayer` and align cells/objects to `space.two-floors`; after the fix re-run `embed.py` and T036
+- [ ] T045 [US3] Wire `viewer/src/dataload.ts` to use the `multilayer.json` sample-set static data embedded in `window.RT_DATA`
+- [X] T023 [US3] Create `viewer/src/floors.ts` grouping floor planes by cell prefix (prefix-less cells attach to the single floor) with group-visibility switching so only the active floor's moves and observations show
 - [X] T024 [US3] Extend `viewer/src/main.ts` with US3 floor-switching wiring over ghost playback
 - [X] T025 [US3] Extend `viewer/index.html` with a floor selector that is hidden entirely for single-floor logs
 
-**Checkpoint**: All user stories independently functional (V-4: per-floor display, no floor UI on single-floor logs).
+**Checkpoint**: All user stories independently functional (V-4: per-floor display, no floor UI on single-floor logs). Phase checkpoints run V-1 rebuild plus V-2, V-3, V-4 each time (applicable scope).
 
 ---
 
@@ -96,7 +121,7 @@
 - [X] T026 Create `viewer/src/order.ts` rendering the pre-entry landing intro (spell text + red seal overlay + SVG `stroke-dashoffset` ink trail, executor-self framing, no in-fiction caster) playing without stutter within 5 seconds
 - [X] T027 Extend `viewer/src/main.ts` with landing-to-program entry wiring (button vs auto decided at slice start)
 - [X] T028 Extend `viewer/index.html` with the landing intro screen (red subtitle + edge vignette) placed before program entry
-- [ ] T029 Regenerate `viewer/dist/data.js` via `viewer/tools/embed.py` and build `viewer/dist/app.js` via `viewer/node_modules/.bin/tsc -p viewer` only, then verify console error/warning-free at `file://$PWD/viewer/index.html`; deploy set is `dist/app.js` + `dist/data.js` + `vendor/three.cjs` with `node_modules`/`.shots` excluded (Muse does not commit; a human commits)
+- [ ] T029 Regenerate `viewer/dist/data.js` via `.venv/bin/python viewer/tools/embed.py` and build `viewer/dist/app.js` via `viewer/node_modules/.bin/tsc -p viewer` only, then verify console error/warning-free at `file://$PWD/viewer/index.html`; deploy set is `index.html` + `dist/app.js` + `dist/data.js` + `vendor/three.cjs` + `data/<set>/` photos with `node_modules`/`.shots` excluded (Muse does not commit; a human commits)
 
 **Checkpoint**: Order/ink + offline deploy verified (V-5).
 
@@ -107,8 +132,8 @@
 **Purpose**: 언어·노출 감사·전체 회귀. 영어 전체 번역은 시간 여유 시 별도 작업 (FR-009, Out of Scope).
 
 - [X] T030 Polish Korean copy in `viewer/index.html` and `viewer/src/*.ts` strings (default language Korean; no webfonts)
+- [ ] T032 Audit exposure compliance in viewer screens and outputs including `viewer/dist/data.js`: photo paths banned on screen, hashes (`sha256`) banned in artifacts; `failed` answers (`puzzle.json` `answer` field) appear only once right after `puzzle_ended(failed)` together with that puzzle's `next_instruction` (`null` shows no next-place phrase; solved puzzles show none, next place via `on_correct`) (exception per decision A: `on_correct` right after correct submission and `answer_submitted.value` display allowed, `reason` excluded from display and `data.js`); no `next_object_id` (full ban), unreleased hints, hint bodies, or non-`failed` puzzle answers (FR-005, data-model Display Exposure)
 - [ ] T031 Run quickstart validation V-1 through V-5 via Playwright MCP only (console collection → real-UI operation → before/after screenshots in `.shots/` opened with `read_file` → PASS/FAIL per item) plus V-6 regression gate `.venv/bin/python -m unittest discover tests -v` (never bare `python`/`python3`)
-- [X] T032 Audit exposure compliance in viewer screens and outputs: no `next_object_id`, `next_instruction`, photo paths/hashes, unreleased hints, or non-`failed` puzzle answers; `failed` answers appear only once right after `puzzle_ended(failed)` (FR-005, data-model Display Exposure)
 
 ---
 
@@ -117,7 +142,7 @@
 ### Phase Dependencies
 
 - **Setup (Phase 1)**: No dependencies — starts immediately. Human env prep (`implementation-notes.md` §4) runs outside Muse in parallel.
-- **Foundational (Phase 2)**: Depends on Setup — BLOCKS all stories and Slice 4.
+- **Foundational (Phase 2)**: Depends on Setup — BLOCKS all stories and Slice 4. T035·T036 run before the implementation items (T006 and later); T042·T043 fix the two sample logs after T036 Red so T036 passes at T037.
 - **US1 (Phase 3)**: After Foundational. MVP.
 - **US2 (Phase 4)**: After Foundational; builds on US1 trajectory but independently testable via V-3.
 - **US3 (Phase 5)**: After Foundational; builds on US1/US2 but independently testable via V-4.
@@ -126,13 +151,14 @@
 
 ### Within Each Story
 
-- Test-data sample first (`testdata/*.json` must pass `log.schema.json`), then model/scene modules, then `main.ts`/`index.html` wiring.
+- Test-data sample first (top-level `testdata/*.json` only must pass `log.schema.json`; `refusal/` and `sets/` excluded), then model/scene modules, then `main.ts`/`index.html` wiring.
+- T046은 T040 뒤, T047은 T041 뒤에 실행한다.
 - `main.ts` and `index.html` extensions are sequential per slice (same files, no `[P]`).
 
 ### Parallel Opportunities
 
-- T002 `[P]` alongside T001 (different files); T008/T009/T011 `[P]` within Foundational (different files, no interdependency).
-- `viewer/testdata/*.json` samples (T012, T017, T022) `[P]` — independent files.
+- T035·T036 `[P]` run first within Foundational (before T006 and later implementation items); then T008/T009/T011 `[P]` (different files, no interdependency); T002 `[P]` alongside T001 (different files).
+- `viewer/testdata/*.json` top-level log samples (T012, T017, T022, T038, T039) `[P]` — independent files. `refusal/` samples (T034) are `[P]` but outside top-level scope. T042·T043 run after T036 Red (different files, `[P]` between them). Sample-set static-data items (T040, T041) `[P]` — independent set dirs. Code-wiring items (T044, T045) carry no `[P]` (`viewer/src/dataload.ts` shared file, wired in order).
 - After Foundational, US phases can parallelize only if editors coordinate `main.ts`/`index.html` (shared files — prefer sequential).
 
 ---
@@ -149,10 +175,12 @@ Task: "Create viewer/src/theme.ts with parchment/ink/seal tokens"
 ## Parallel Example: Test Data
 
 ```bash
-# Launch independent schema-passing samples together (different files):
+# Launch independent schema-required log samples together (different files):
 Task: "Create viewer/testdata/stuck-action-limit.json (US1)"
 Task: "Create viewer/testdata/failed.json (US2)"
 Task: "Create viewer/testdata/multilayer.json (US3)"
+Task: "Create viewer/testdata/api-error.json + multi-move.json (US1)"
+Task: "Create viewer/testdata/refusal/ playback-refusal samples (logparse, V-2 only; excluded from top-level schema-sample requirement)"
 ```
 
 ---
@@ -164,7 +192,7 @@ Task: "Create viewer/testdata/multilayer.json (US3)"
 1. Complete Phase 1: Setup (+ human env prep outside Muse).
 2. Complete Phase 2: Foundational (CRITICAL — blocks all stories).
 3. Complete Phase 3: US1 footprint trajectory.
-4. **STOP and VALIDATE**: V-2 independently (point count = `move` + 1, stuck display, both load paths) + V-6 gate.
+4. **STOP and VALIDATE**: V-2 independently (point count = `move` + 1, 끊김·실패 display, both load paths) + V-6 gate.
 5. Demo if ready (`file://` open, no server).
 
 ### Incremental Delivery
@@ -180,6 +208,8 @@ Task: "Create viewer/testdata/multilayer.json (US3)"
 
 ## Notes
 
+- `[X]`는 동작을 실제로 검증한 뒤에만 표시한다. 현재 `viewer/`는 검증되지 않은 초안이며, 다음 작업에서 삭제하지 않고 수정한다.
+- T001~T005는 완료 상태로 둔다. `viewer/package.json`(T004)은 implementation-notes §4에서 사람이 복사한 파일이므로 변경하지 않는다.
 - `[P]` = different files, no dependencies. `[USn]` maps the task to its story for traceability.
 - Each story is independently completable and testable via its quickstart scenario.
 - `file://` prohibitions hold everywhere: no ES modules, importmap, CDN, external URLs, local server, `fetch`/XHR local reads, or photo WebGL textures.

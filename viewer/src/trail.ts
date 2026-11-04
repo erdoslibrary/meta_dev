@@ -1,37 +1,64 @@
-/* Footprint trail: start_cell + move order as Line + Points. */
-import { LogEvent } from "./types";
-import { INK, SEAL_RED } from "./theme";
-import { cellToXY } from "./plane";
+/* Footprint trajectory: Line + Points (global script). */
 
-export interface Trail {
-  group: THREE.Group;
-  pointCount: number;
-  stuck: boolean;
+interface TrailPoint { x: number; z: number; }
+
+/** Points = move count + 1 (caller prepends start_cell). */
+function buildTrail(points: TrailPoint[], sealTail: boolean): THREE.Group {
+  const group = new THREE.Group();
+  const positions = new Float32Array(points.length * 3);
+  const colors = new Float32Array(points.length * 3);
+  const ink = new THREE.Color(INK_MAIN);
+  const seal = new THREE.Color(SEAL_RED);
+  for (let i = 0; i < points.length; i++) {
+    positions[i * 3] = points[i].x;
+    positions[i * 3 + 1] = 0.05;
+    positions[i * 3 + 2] = points[i].z;
+    const last = sealTail && i >= points.length - 2;
+    const c = last ? seal : ink;
+    colors[i * 3] = c.r;
+    colors[i * 3 + 1] = c.g;
+    colors[i * 3 + 2] = c.b;
+  }
+  const lineGeo = new THREE.BufferGeometry();
+  lineGeo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+  lineGeo.setAttribute("color", new THREE.BufferAttribute(colors, 3));
+  const line = new THREE.Line(
+    lineGeo,
+    new THREE.LineBasicMaterial({ vertexColors: true })
+  );
+  group.add(line);
+
+  const dotGeo = new THREE.BufferGeometry();
+  dotGeo.setAttribute("position", new THREE.BufferAttribute(positions.slice(), 3));
+  const dots = new THREE.Points(
+    dotGeo,
+    new THREE.PointsMaterial({ size: 0.22, vertexColors: false, color: ink })
+  );
+  group.add(dots);
+  if (sealTail && points.length > 0) {
+    const tip = points[points.length - 1];
+    const marker = new THREE.Mesh(
+      new THREE.CircleGeometry(0.28, 24),
+      new THREE.MeshBasicMaterial({ color: seal })
+    );
+    marker.rotation.x = -Math.PI / 2;
+    marker.position.set(tip.x, 0.06, tip.z);
+    group.add(marker);
+  }
+  return group;
 }
 
-/** Points = move events + 1 (US1 independent test). Stuck end -> seal-red tail. */
-export function buildTrail(startCell: string, events: LogEvent[]): Trail {
-  const moves = events.filter((e) => e.type === "move").map((e) => String(e.value));
-  const cells = [startCell, ...moves];
-  const pts = cells.map((c) => {
-    const p = cellToXY(c);
-    return new THREE.Vector3(p.x, p.y, 2);
-  });
-  const end = events[events.length - 1];
-  const stuck = end.type === "end" && end.outcome !== "completed";
-
-  const group = new THREE.Group();
-  group.name = "trail";
-  const lineGeo = new THREE.BufferGeometry().setFromPoints(pts);
-  group.add(new THREE.Line(lineGeo, new THREE.LineBasicMaterial({ color: INK })));
-  const dotGeo = new THREE.BufferGeometry().setFromPoints(pts);
-  group.add(new THREE.Points(dotGeo, new THREE.PointsMaterial({ color: INK, size: 6 })));
-
-  if (stuck && pts.length > 1) {
-    const tail = new THREE.BufferGeometry().setFromPoints(pts.slice(-2));
-    group.add(new THREE.Line(tail, new THREE.LineBasicMaterial({ color: SEAL_RED })));
-    const mark = new THREE.BufferGeometry().setFromPoints([pts[pts.length - 1]]);
-    group.add(new THREE.Points(mark, new THREE.PointsMaterial({ color: SEAL_RED, size: 14 })));
-  }
-  return { group, pointCount: pts.length, stuck };
+/** Mark a puzzle_ended result on the trajectory (FR-004). */
+function addResultMarker(
+  group: THREE.Group, at: TrailPoint,
+  result: "solved_by_dialogue" | "solved_with_hint" | "failed"
+): void {
+  const color = result === "failed" ? SEAL_RED : INK_MAIN;
+  const ring = new THREE.Mesh(
+    new THREE.RingGeometry(0.3, 0.42, 24),
+    new THREE.MeshBasicMaterial({ color, side: THREE.DoubleSide })
+  );
+  ring.rotation.x = -Math.PI / 2;
+  ring.position.set(at.x, 0.06, at.z);
+  group.add(ring);
 }

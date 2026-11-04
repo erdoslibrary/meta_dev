@@ -1,31 +1,26 @@
-/* Order/ink intro: pre-entry landing, executor-self framing, no in-fiction caster. */
-import { BASE_FROM, INK, SEAL_RED, SERIF } from "./theme";
+/* Pre-entry landing intro (global script). Executor-self framing: the
+   viewer reads the spell themselves; no in-fiction caster. Spell text +
+   red seal overlay + SVG ink trail, finishing within 5 seconds. */
 
-const SPELL = "지도를 펼치고, 발자취를 따라가리라.";
+const INK_PATH_LENGTH = 600;
+const INTRO_MS = 2600;
 
-export function showLanding(onEnter: () => void): void {
-  const landing = document.getElementById("landing");
-  if (!landing) {
-    onEnter();
+function playOrderIntro(): void {
+  const path = document.getElementById("ink-path") as unknown as SVGPathElement | null;
+  const spell = document.getElementById("spell");
+  const reduce = typeof window !== "undefined" &&
+    typeof window.matchMedia === "function" &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (spell) spell.style.opacity = "1";
+  if (!path) return;
+  if (reduce) {
+    path.style.strokeDashoffset = "0";
     return;
   }
-  landing.style.fontFamily = SERIF;
-  landing.style.background = `radial-gradient(ellipse at center, ${BASE_FROM} 55%, rgba(42,33,24,0.55) 100%)`;
-  landing.innerHTML =
-    `<div style="text-align:center;max-width:36em;">` +
-    `<div style="border:3px double ${SEAL_RED};padding:1.5em 2em;">` +
-    `<svg width="320" height="60" viewBox="0 0 320 60" aria-hidden="true">` +
-    `<path d="M10 45 C 80 10, 160 60, 310 25" fill="none" stroke="${INK}" stroke-width="3" ` +
-    `stroke-dasharray="340" stroke-dashoffset="340" style="animation: ink 3s ease-out forwards;"></path>` +
-    `<style>@keyframes ink { to { stroke-dashoffset: 0; } }</style>` +
-    `</svg>` +
-    `<p class="seal" style="color:${SEAL_RED};">${SPELL}</p>` +
-    `<p>기록된 실행을 처음부터 끝까지 재생한다.</p>` +
-    `<button id="enter" type="button">입장</button>` +
-    `</div></div>`;
-  document.getElementById("enter")!.addEventListener("click", () => {
-    landing.style.display = "none";
-    document.getElementById("app")!.style.display = "block";
-    onEnter();
-  });
+  path.style.transition = "none";
+  path.style.strokeDasharray = String(INK_PATH_LENGTH);
+  path.style.strokeDashoffset = String(INK_PATH_LENGTH);
+  void path.getBoundingClientRect();
+  path.style.transition = "stroke-dashoffset " + INTRO_MS + "ms linear";
+  path.style.strokeDashoffset = "0";
 }

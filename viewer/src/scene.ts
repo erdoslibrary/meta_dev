@@ -1,42 +1,64 @@
-/* Stage: repeat RAF render + context-loss recovery (R-4). */
+/* THREE scene with repeat rendering + context-loss recovery (global script). */
 
-export interface Stage {
-  scene: THREE.Scene;
-  camera: THREE.OrthographicCamera;
-  renderer: THREE.WebGLRenderer;
+let sceneRenderer: THREE.WebGLRenderer | null = null;
+let sceneHandle: THREE.Scene | null = null;
+let sceneCamera: THREE.OrthographicCamera | null = null;
+let rafId = 0;
+let canvasEl: HTMLCanvasElement | null = null;
+
+/** Rebuild hook set by the wiring (plane/trail re-add their objects). */
+let rebuildHook: (() => void) | null = null;
+function onSceneRebuild(hook: () => void): void {
+  rebuildHook = hook;
 }
 
-export function createStage(canvas: HTMLCanvasElement): Stage {
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-  renderer.setSize(800, 600, false);
-  const scene = new THREE.Scene();
-  const camera = new THREE.OrthographicCamera(-320, 320, 320, -320, 0.1, 2000);
-  camera.position.set(300, 300, 500);
-
-  const rebuild = () => buildScene(scene, camera);
-  buildScene(scene, camera);
-
-  canvas.addEventListener("webglcontextlost", (e) => e.preventDefault());
-  canvas.addEventListener("webglcontextrestored", () => rebuild());
-
-  const light = new THREE.DirectionalLight(0xffffff, 1.0);
-  light.position.set(100, 200, 400);
-  scene.add(light);
-
-  const frame = () => {
-    renderer.render(scene, camera);
-    requestAnimationFrame(frame);
-  };
-  requestAnimationFrame(frame);
-  return { scene, camera, renderer };
+function sceneSize(): { w: number; h: number } {
+  const host = canvasEl && canvasEl.parentElement;
+  const w = host ? host.clientWidth : 800;
+  const h = host ? host.clientHeight : 600;
+  return { w: Math.max(320, w), h: Math.max(240, h) };
 }
 
-/** Cleared and re-run on context restore; slice modules add content after. */
-function buildScene(scene: THREE.Scene, _camera: THREE.OrthographicCamera): void {
-  while (scene.children.length > 0) {
-    scene.remove(scene.children[0]);
+function buildScene(): void {
+  sceneHandle = new THREE.Scene();
+  sceneHandle.background = new THREE.Color("#E9DCC0");
+  const { w, h } = sceneSize();
+  const half = 8;
+  sceneCamera = new THREE.OrthographicCamera(
+    -half * (w / h), half * (w / h), half, -half, 0.1, 100
+  );
+  sceneCamera.position.set(0, 10, 0.01);
+  sceneCamera.lookAt(0, 0, 0);
+  if (rebuildHook) rebuildHook();
+}
+
+function renderLoop(): void {
+  rafId = requestAnimationFrame(renderLoop);
+  if (sceneRenderer && sceneHandle && sceneCamera) {
+    const { w, h } = sceneSize();
+    sceneRenderer.setSize(w, h, false);
+    sceneRenderer.render(sceneHandle, sceneCamera);
   }
-  const light = new THREE.DirectionalLight(0xffffff, 1.0);
-  light.position.set(100, 200, 400);
-  scene.add(light);
+}
+
+/** Attach the canvas and start repeat rendering. Safe to call once. */
+function startScene(canvas: HTMLCanvasElement): void {
+  if (sceneRenderer) return;
+  canvasEl = canvas;
+  sceneRenderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+  buildScene();
+  canvas.addEventListener("webglcontextlost", (e) => {
+    e.preventDefault();
+    cancelAnimationFrame(rafId);
+    rafId = 0;
+  });
+  canvas.addEventListener("webglcontextrestored", () => {
+    buildScene();
+    if (!rafId) renderLoop();
+  });
+  renderLoop();
+}
+
+function currentScene(): THREE.Scene | null {
+  return sceneHandle;
 }

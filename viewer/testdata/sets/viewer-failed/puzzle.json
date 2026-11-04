@@ -1,0 +1,30 @@
+{
+  "puzzle_set_id": "viewer-failed",
+  "space_id": "viewer-failed-space",
+  "start_cell": "A1",
+  "puzzles": [
+    {
+      "number": 1,
+      "object_id": "signboard@C4",
+      "npc": "drunkard",
+      "question": "안내판의 빨간 첫 글자만 순서대로 읽으면?",
+      "dialogue": [
+        { "text": "어.. 자네도 분리배출 때문에 왔나?", "contains_hint": false },
+        { "text": "빨간 글자만 따라 읽어 보게나.", "contains_hint": true }
+      ],
+      "image": {
+        "path": "puzzles/bottle_quiz.jpg",
+        "sha256": "c0922cc1f6fe33c8686c4970948f65337931efc8446a9f6657a2d1eb3d595c41"
+      },
+      "answer": "spiral",
+      "answer_letter_count": 6,
+      "hints": [
+        { "level": 1, "after_wrong": 2, "text": "한 병의 끝 글자가 다음 병의 첫 글자다." }
+      ],
+      "next_instruction": "다음은 2층 복도의 안내판이다.",
+      "next_object_id": "board@D5",
+      "on_wrong": "틀렸구먼! 한 잔 더 마셔야겠네.",
+      "on_correct": "허허, 제대로 돌아 나왔구먼."
+    }
+  ]
+}

@@ -1,174 +1,314 @@
-/* Entry: US1 trajectory + US2 ghost wiring. */
-import { RunLog, SetBundle } from "./types";
-import { builtinData, loadLogFile } from "./dataload";
-import { validatePlaybackOrder } from "./logparse";
-import { createStage } from "./scene";
-import { cellToXY } from "./plane";
-import { buildFloorViews, showFloor, FloorView } from "./floors";
-import { GhostPlayer } from "./ghost";
-import { renderEvent, clearPanels } from "./panels";
-import { showLanding } from "./order";
+/* Program entry + US1 wiring (global script, runs after DOMContentLoaded). */
 
-let stage: ReturnType<typeof createStage> | null = null;
-let ghost: GhostPlayer | null = null;
-let bundle: SetBundle | null = null;
-let setName = "";
-let marker: THREE.Mesh | null = null;
-let timer: number | null = null;
+let currentLog: RunLog | null = null;
+let currentStatic: { space: SpaceData; puzzle: PuzzleData } | null = null;
+let filePuzzle: PuzzleData | null = null;
+let currentPhotoBase = "";
+let currentNpcNames: { [id: string]: string } = {};
+let logFloorKeys: string[] = [];
+let activeFloor: string | null = null;
+let stepIndex = 0;
+let playTimer = 0;
+let contentGroup: THREE.Group | null = null;
 
-function status(msg: string): void {
-  const el = document.getElementById("status");
-  if (el) textContentSafe(el, msg);
+function el(id: string): HTMLElement | null {
+  return document.getElementById(id);
 }
 
-function textContentSafe(el: HTMLElement, msg: string): void {
-  el.textContent = msg;
+function setStatus(text: string): void {
+  const s = el("status");
+  if (s) s.textContent = text;
 }
 
-/** Default log: oracle r0 when bundled, else the first available log. */
-export function defaultLog(): { name: string; key: string; log: RunLog } | null {
-  const data = builtinData();
+function staticFor(log: RunLog, data: RtData | null): { space: SpaceData; puzzle: PuzzleData } | null {
   if (!data) return null;
-  for (const name of Object.keys(data.sets)) {
-    const logs = data.sets[name].logs;
-    if (logs["oracle/r0"]) return { name, key: "oracle/r0", log: logs["oracle/r0"] };
-    const keys = Object.keys(logs);
-    if (keys.length > 0) return { name, key: keys[0], log: logs[keys[0]] };
-  }
-  const tkeys = Object.keys(data.testdata);
-  if (tkeys.length > 0) {
-    return { name: "", key: tkeys[0], log: data.testdata[tkeys[0]] };
+  const set = data.sets[log.puzzle_set_id];
+  if (set) return { space: set.space, puzzle: set.puzzle };
+  const sample = data.sample_sets[log.puzzle_set_id];
+  if (sample && sample.space && sample.puzzle) {
+    return { space: sample.space, puzzle: sample.puzzle };
   }
   return null;
 }
 
-function moveMarker(cell: string): void {
-  if (!marker) return;
-  try {
-    const p = cellToXY(cell);
-    marker.position.set(p.x, p.y, 4);
-  } catch {
-    /* unknown cell: leave marker */
+function moveCells(log: RunLog, upto: number): string[] {
+  const cells: string[] = [];
+  const events = log.events.slice(0, upto);
+  for (const e of events) {
+    if (e.type === "move") cells.push((e as MoveEvent).value);
   }
+  return cells;
 }
 
-function stepGhost(): void {
-  if (!ghost || !bundle || ghost.done) {
-    if (timer !== null) {
-      window.clearInterval(timer);
-      timer = null;
+function logOutcome(log: RunLog, upto: number): EndEvent | PuzzleEndedEvent | null {
+  const events = log.events.slice(0, upto);
+  for (let i = events.length - 1; i >= 0; i--) {
+    const e = events[i];
+    if (e.type === "end" || e.type === "puzzle_ended") {
+      return e as EndEvent | PuzzleEndedEvent;
     }
+  }
+  return null;
+}
+
+function renderAll(): void {
+  const scene = currentScene();
+  if (!scene) return;
+  if (contentGroup) {
+    scene.remove(contentGroup);
+    contentGroup = null;
+  }
+  if (!currentLog) return;
+  contentGroup = new THREE.Group();
+  scene.add(contentGroup);
+
+  const log = currentLog;
+  const space = currentStatic ? currentStatic.space : null;
+  const columns = space ? space.floors[0].columns : 6;
+  const rows = space ? space.floors[0].rows : 6;
+  const multi = logFloorKeys.length > 1;
+  const visible = multi ? activeFloor : null;
+  if (space) {
+    const explored = stepIndex > 0;
+    for (const floor of space.floors) {
+      const key = floor.id || "";
+      if (multi && key !== (visible || logFloorKeys[0])) continue;
+      if (!multi && space.floors[0] !== floor) continue;
+      contentGroup.add(buildFloorPlane(floor, explored));
+    }
+  }
+  const start = currentStatic ? currentStatic.puzzle.start_cell : "A1";
+  const onFloor = (cell: string): boolean =>
+    !multi || floorKeyOfCell(cell) === (visible || logFloorKeys[0]);
+  const cells = [start].concat(moveCells(log, stepIndex)).filter(onFloor);
+  const pts = cells.map((c) => cellToXY(c, columns, rows));
+  const tail = logOutcome(log, stepIndex);
+  const sealTail = !!tail && (
+    (tail.type === "end" && tail.outcome !== "completed") ||
+    (tail.type === "puzzle_ended" && tail.result === "failed")
+  );
+  const trail = buildTrail(pts, sealTail);
+  contentGroup.add(trail);
+
+  // Mark puzzle results at the cell where each puzzle ended.
+  const events = log.events.slice(0, stepIndex);
+  let mi = 0;
+  const moves = moveCells(log, stepIndex);
+  for (const e of events) {
+    if (e.type === "move") mi++;
+    if (e.type === "puzzle_ended") {
+      const pe = e as PuzzleEndedEvent;
+      const atCell = mi === 0 ? cells[0] : moves[mi - 1];
+      if (!atCell || !onFloor(atCell)) continue;
+      const pos = cellToXY(atCell, columns, rows);
+      addResultMarker(trail, pos, pe.result);
+    }
+  }
+
+  const movesTotal = moveCells(log, log.events.length).length;
+  const info = el("trail-info");
+  if (info) {
+    const scope = multi ? "층 " + floorLabel(visible || logFloorKeys[0]) + " " : "";
+    info.textContent = scope + "발자국 " + pts.length + "점 (move " + movesTotal + " + 시작점)";
+  }
+  if (tail && tail.type === "end" && tail.outcome !== "completed") {
+    setStatus("끊김(" + tail.outcome + "): 끊긴 지점에서 멈춤. 끝까지 재생되지 않음.");
+  } else if (tail && tail.type === "puzzle_ended" && tail.result === "failed") {
+    setStatus("실패 구간: Seal Red 표시.");
+  } else if (stepIndex >= log.events.length) {
+    setStatus("재생 완료.");
+  } else {
+    setStatus("재생 중: " + stepIndex + "/" + log.events.length);
+  }
+  const feed = el("ghost");
+  const resultBox = el("result");
+  if (feed && resultBox) {
+    renderPanels(feed, resultBox, log, stepIndex, {
+      space: currentStatic ? currentStatic.space : null,
+      puzzle: currentStatic ? currentStatic.puzzle : null,
+      filePuzzle,
+      photoBase: currentPhotoBase,
+      npcNames: currentNpcNames,
+      floor: multi ? (visible || logFloorKeys[0]) : null,
+    });
+  }
+  onSceneRebuild(renderAll);
+}
+
+function setLog(log: RunLog, data: RtData | null): void {
+  const bad = validateLogForPlayback(log);
+  if (bad) {
+    setStatus("재생 거부: " + bad);
     return;
   }
-  const ev = ghost.next()!;
-  moveMarker(ghost.position);
-  renderEvent({ setName, space: bundle.space, puzzle: bundle.puzzle, npc: bundle.npc }, ev);
+  currentLog = log;
+  currentStatic = staticFor(log, data);
+  currentPhotoBase = "";
+  currentNpcNames = {};
+  if (data) {
+    const set = data.sets[log.puzzle_set_id];
+    if (set) {
+      currentPhotoBase = "../data/" + log.puzzle_set_id + "/";
+      currentNpcNames[set.npc.id] = set.npc.name;
+    } else {
+      const sample = data.sample_sets[log.puzzle_set_id];
+      if (sample) {
+        currentPhotoBase = "testdata/sets/" + log.puzzle_set_id + "/";
+        if (sample.npc) currentNpcNames[sample.npc.id] = sample.npc.name;
+      }
+    }
+  }
+  const startCell = currentStatic ? currentStatic.puzzle.start_cell : "A1";
+  logFloorKeys = logFloors(log, startCell);
+  activeFloor = logFloorKeys.length > 0 ? logFloorKeys[0] : null;
+  const floorSel = el("floor") as HTMLSelectElement | null;
+  if (floorSel) {
+    floorSel.innerHTML = "";
+    if (logFloorKeys.length > 1) {
+      floorSel.style.display = "";
+      for (const key of logFloorKeys) {
+        const opt = document.createElement("option");
+        opt.value = key;
+        opt.textContent = floorLabel(key);
+        floorSel.appendChild(opt);
+      }
+      floorSel.value = activeFloor || "";
+    } else {
+      floorSel.style.display = "none";
+    }
+  }
+  stepIndex = 0;
+  stopPlay();
+  renderAll();
 }
 
-export function showLog(name: string, log: RunLog): void {
+function stepOnce(): void {
+  if (!currentLog) return;
+  if (stepIndex < currentLog.events.length) {
+    stepIndex++;
+    renderAll();
+  }
+  if (currentLog && stepIndex >= currentLog.events.length) stopPlay();
+}
+
+function stopPlay(): void {
+  if (playTimer) {
+    clearInterval(playTimer);
+    playTimer = 0;
+  }
+}
+
+function startPlay(): void {
+  if (!currentLog || playTimer) return;
+  playTimer = window.setInterval(() => {
+    if (!currentLog || stepIndex >= currentLog.events.length) {
+      stopPlay();
+      return;
+    }
+    stepOnce();
+  }, 500);
+}
+
+function builtinLogEntries(data: RtData): { label: string; log: RunLog }[] {
+  const out: { label: string; log: RunLog }[] = [];
+  for (const setName of Object.keys(data.sets)) {
+    const set = data.sets[setName];
+    for (const key of Object.keys(set.logs)) {
+      out.push({ label: setName + "/" + key, log: set.logs[key] });
+    }
+  }
+  for (const name of Object.keys(data.testdata)) {
+    out.push({ label: "testdata/" + name, log: data.testdata[name] });
+  }
+  return out;
+}
+
+function fillLogSelect(data: RtData | null): void {
+  const sel = el("logsel") as HTMLSelectElement | null;
+  if (!sel || !data) return;
+  sel.innerHTML = "";
+  const entries = builtinLogEntries(data);
+  for (let i = 0; i < entries.length; i++) {
+    const opt = document.createElement("option");
+    opt.value = String(i);
+    opt.textContent = entries[i].label;
+    sel.appendChild(opt);
+  }
+  sel.onchange = () => {
+    const idx = parseInt(sel.value, 10);
+    if (!isNaN(idx) && entries[idx]) setLog(entries[idx].log, data);
+  };
+  if (entries.length > 0) setLog(entries[0].log, data);
+}
+
+function startApp(): void {
+  const canvas = document.getElementById("map") as HTMLCanvasElement | null;
+  if (canvas) startScene(canvas);
   const data = builtinData();
-  bundle = (name ? data?.sets[name] : null) ?? data?.sets[Object.keys(data?.sets ?? {})[0]] ?? null;
-  if (!bundle || !stage) {
-    status("데이터 없음");
-    return;
-  }
-  setName = name || Object.keys(data!.sets)[0];
-  const check = validatePlaybackOrder(log.events);
-  if (!check.ok) {
-    status(check.reason);
-    return;
-  }
-  while (stage.scene.children.length > 1) {
-    stage.scene.remove(stage.scene.children[1]);
-  }
-  clearPanels();
-  const views: FloorView[] = buildFloorViews(bundle.space, bundle.puzzle.start_cell, log.events);
-  for (const v of views) stage.scene.add(v.group);
-  renderFloorSelector(views);
+  fillLogSelect(data);
+  if (!data) setStatus("내장 기록 없음. 파일로 로그를 열어주세요.");
 
-  const markerGeo = new THREE.SphereGeometry(10, 16, 16);
-  const markerMat = new THREE.MeshBasicMaterial({ color: 0xa0322b });
-  marker = new THREE.Mesh(markerGeo, markerMat);
-  stage.scene.add(marker);
-
-  ghost = new GhostPlayer(bundle.puzzle.start_cell, log.events);
-  moveMarker(ghost.position);
-  const moves = log.events.filter((e) => e.type === "move").length;
-  const end = log.events[log.events.length - 1];
-  const tail = end.type === "end" && end.outcome !== "completed"
-    ? ` 끊김(${end.outcome}) 표시.`
-    : " 완주.";
-  status(`궤적 점 ${moves + 1} = move ${moves} + 1.${tail}`);
+  const enter = el("enter");
+  if (enter) {
+    enter.addEventListener("click", () => {
+      const landing = el("landing");
+      const app = el("app");
+      if (landing) landing.style.display = "none";
+      if (app) app.style.display = "block";
+    });
+  }
+  const floorSel = el("floor") as HTMLSelectElement | null;
+  if (floorSel) {
+    floorSel.addEventListener("change", () => {
+      activeFloor = floorSel.value;
+      stepIndex = 0;
+      stopPlay();
+      renderAll();
+    });
+  }
+  const play = el("play");
+  if (play) play.addEventListener("click", startPlay);
+  const step = el("step");
+  if (step) step.addEventListener("click", () => { stopPlay(); stepOnce(); });
+  const reset = el("reset");
+  if (reset) {
+    reset.addEventListener("click", () => {
+      if (!currentLog) return;
+      stepIndex = 0;
+      stopPlay();
+      renderAll();
+    });
+  }
+  const puzzleFile = el("puzzlefile") as HTMLInputElement | null;
+  if (puzzleFile) {
+    puzzleFile.addEventListener("change", () => {
+      if (!puzzleFile.files || puzzleFile.files.length === 0) return;
+      loadPuzzleFile(puzzleFile.files[0]).then(
+        (puzzle) => {
+          filePuzzle = puzzle;
+          setStatus("퍼즐 데이터 선택됨.");
+          renderAll();
+        },
+        (err) => setStatus("퍼즐 읽기 실패: " + String(err && (err as Error).message || err))
+      );
+    });
+  }
+  const file = el("logfile") as HTMLInputElement | null;
+  if (file) {
+    file.addEventListener("change", () => {
+      if (!file.files || file.files.length === 0) return;
+      loadLogFile(file.files[0]).then(
+        (log) => setLog(log, builtinData()),
+        (err) => setStatus("재생 거부: " + String(err && (err as Error).message || err))
+      );
+    });
+  }
+  onSceneRebuild(renderAll);
 }
 
-function renderFloorSelector(views: FloorView[]): void {
-  const box = document.getElementById("floors");
-  if (!box) return;
-  box.innerHTML = "";
-  if (views.length < 2) {
-    box.style.display = "none";
-    return;
-  }
-  box.style.display = "block";
-  for (const v of views) {
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.textContent = v.id;
-    btn.addEventListener("click", () => showFloor(views, v.id));
-    box.appendChild(btn);
-  }
-}
-
-function init(): void {
-  const canvas = document.getElementById("map") as HTMLCanvasElement;
-  if (!canvas) return;
-  stage = createStage(canvas);
-  // Entry method (Slice 4 decision): explicit button on the landing screen.
-  showLanding(() => {
-    enterProgram();
+if (typeof document !== "undefined") {
+  document.addEventListener("DOMContentLoaded", () => {
+    playOrderIntro();
+    startApp();
   });
-  pendingFirst = defaultLog();
-}
-
-let pendingFirst: { name: string; log: RunLog } | null = null;
-
-function enterProgram(): void {
-  const first = pendingFirst;
-  if (first) showLog(first.name, first.log);
-  else status("내장 데이터 없음. 로그 파일을 선택하세요.");
-
-  const input = document.getElementById("logfile") as HTMLInputElement;
-  input.addEventListener("change", async () => {
-    const file = input.files?.[0];
-    if (!file) return;
-    try {
-      const log = await loadLogFile(file);
-      showLog(first ? first.name : "", log);
-    } catch (e) {
-      status(String(e));
-    }
-  });
-
-  document.getElementById("play")!.addEventListener("click", () => {
-    if (timer !== null) return;
-    timer = window.setInterval(stepGhost, 800);
-  });
-  document.getElementById("step")!.addEventListener("click", stepGhost);
-  document.getElementById("reset")!.addEventListener("click", () => {
-    if (timer !== null) {
-      window.clearInterval(timer);
-      timer = null;
-    }
-    if (ghost && bundle) {
-      ghost.reset();
-      clearPanels();
-      moveMarker(ghost.position);
-    }
-  });
-}
-
-if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", init);
-} else {
-  init();
 }
