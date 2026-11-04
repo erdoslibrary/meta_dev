@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "target": "es2020",
+    "module": "none",
+    "moduleResolution": "node10",
+    "outFile": "dist/app.js",
+    "strict": true,
+    "types": ["three"],
+    "lib": ["es2020", "dom"],
+    "skipLibCheck": true
+  },
+  "include": ["src"]
+}

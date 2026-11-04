@@ -1,0 +1,12 @@
+{
+  "run_id": "r90",
+  "persona": { "age": 50, "job": "교사", "vocab": "중", "thinking": "문자 그대로 읽음" },
+  "puzzle_set_id": "drunkard-set",
+  "model": "muse-spark-1.3",
+  "events": [
+    { "t": 1, "puzzle": 1, "type": "move", "value": "B2" },
+    { "t": 2, "puzzle": 1, "type": "move", "value": "C4" },
+    { "t": 3, "puzzle": 1, "type": "view", "value": "signboard@C4" },
+    { "t": 4, "puzzle": 1, "type": "end", "outcome": "action_limit" }
+  ]
+}

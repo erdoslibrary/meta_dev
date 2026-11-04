@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>공간 퍼즐 뷰어</title>
+<style>
+  body { background: #E9DCC0; color: #2A2118; font-family: Georgia, "Times New Roman", serif; margin: 0; }
+  #landing { position: fixed; inset: 0; background: #E9DCC0; display: flex; align-items: center; justify-content: center; }
+  #app { display: none; }
+  #map { width: 100%; height: 70vh; }
+  #floors { display: none; }
+  .seal { color: #A0322B; }
+  .photo-empty { border: 1px dashed #2A2118; min-height: 120px; }
+</style>
+</head>
+<body>
+<div id="landing"><p class="seal">기록을 여는 중…</p></div>
+<div id="app">
+  <input type="file" id="logfile" accept="application/json">
+  <div id="status" role="status"></div>
+  <div id="floors"><span>층:</span></div>
+  <canvas id="map"></canvas>
+  <div>
+    <button id="play" type="button">재생</button>
+    <button id="step" type="button">다음</button>
+    <button id="reset" type="button">처음부터</button>
+  </div>
+  <div id="ghost"></div>
+  <div id="result"></div>
+</div>
+<script>var module = { exports: {} }, exports = module.exports;</script>
+<script src="vendor/three.cjs"></script>
+<script>window.THREE = module.exports;</script>
+<script src="dist/data.js"></script>
+<script src="dist/app.js"></script>
+</body>
+</html>
