@@ -46,14 +46,16 @@ Real-to-Sim 공간 퍼즐 스튜디오의 핵심 검증 흐름을 만든다.
 - `python -m unittest discover tests -v` 통과.
 - `python -m realtosim.validate`, `oracle`, `report` 명령 동작.
 - `logs/<set>/` 15개 이상, 퍼즐별 `puzzle_ended` 10개 이상.
-- 현 상태: `logs/drunkard-set/` 5회로 기준 미달. 기준 하향 없이 기록만 한다.
+- 현 상태: `logs/drunkard-set/` 13회로 기준 미달. 기준 하향 없이 기록만 한다.
 - 결정(2026-11-05): 추가 실행 없이 현재 5회 표본으로 확정한다. 기준(15회·퍼즐별 10개·사고방식 각 5회)은 그대로 두고 미달 사실만 `reports/drunkard-set/report.md` 한계 절에 남긴다. 변경 사유: 남은 시간을 뷰어 마감과 데모 영상에 쓰기로 했다.
+- 변경 사유(2026-11-06): 로깅을 r13까지 이어 r13으로 동결한다. 기준(15회·퍼즐별 10개·사고방식 각 5회)은 그대로 두고 `reports/drunkard-set/report.md` 한계 절에 13회 사실을 남긴다.
 
 ## 갈래 2 specify 입력
 
 - 범위: 지도+고스트+층 전환+주문·잉크 연출 포함. 주문 연출은 기본 동작 완성 후 필수(동영상용). 수용 기준은 002 plan에서 결정. 프론트 스택은 three.js + TS로 결정됨.
 - 변경 사유(2026-11-04): 아래 뷰어 구현 언어·3D 항목과 맞춤.
-- 입력 로그: `logs/drunkard-set/` 5회 미달 표본(`reports/drunkard-set/report.md`에 명기).
+- 입력 로그: `logs/drunkard-set/` 13회 표본(`reports/drunkard-set/report.md`에 명기).
+- 변경 사유(2026-11-06): r13 동결 반영. 5회 표시는 13회로 교체한다.
 - 엔진·로그 형식 변경 없음(TRD §9).
 - 비전(003 후보): 층수 입력 → 마우스 평면도 → 사물·방문장소 입력 → 사진·퀴즈 JSON → 풀이 검증. 순서 002 뷰어 → 003 빌더. 당장 spec 없음.
 - 산출물 언어: 한국어 기본. 시간 여유 시 영어 전체 번역(뷰어 UI·보고서 구조·퍼즐 데이터) 추가 작업.
