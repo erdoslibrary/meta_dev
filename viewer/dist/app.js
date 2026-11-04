@@ -36,48 +36,6 @@ function loadLogFile(file) {
 function loadPuzzleFile(file) {
     return readJsonFile(file).then((doc) => doc);
 }
-/** Sample-set id linked by viewer/testdata/failed.json (T040/T046). */
-const FAILED_SAMPLE_SET_ID = "viewer-failed";
-/** Sample-set id linked by viewer/testdata/multilayer.json (T041/T047). */
-const MULTILAYER_SAMPLE_SET_ID = "viewer-multilayer";
-/** One sample-set bundle embedded in window.RT_DATA (viewer/testdata/sets/<id>/). */
-function sampleSetFor(data, setId) {
-    if (!data || !data.sample_sets)
-        return null;
-    return data.sample_sets[setId] ?? null;
-}
-/** Space + puzzle of one embedded sample set (both must be present). */
-function sampleStaticFor(data, setId) {
-    const set = sampleSetFor(data, setId);
-    if (set && set.space && set.puzzle) {
-        return { space: set.space, puzzle: set.puzzle };
-    }
-    return null;
-}
-/** T044: static data of the failed.json sample set from built-in RT_DATA. */
-function failedSampleStatic(data) {
-    return sampleStaticFor(data, FAILED_SAMPLE_SET_ID);
-}
-/** T045: static data of the multilayer.json sample set from built-in RT_DATA. */
-function multilayerSampleStatic(data) {
-    return sampleStaticFor(data, MULTILAYER_SAMPLE_SET_ID);
-}
-/** Reveals entry of one embedded sample-set log (keys like "testdata/failed"). */
-function sampleRevealsFor(data, setId, logKey) {
-    const set = sampleSetFor(data, setId);
-    if (set && set.reveals && set.reveals[logKey]) {
-        return set.reveals[logKey];
-    }
-    return null;
-}
-/** T044: reveals of testdata/failed from built-in RT_DATA. */
-function failedSampleReveals(data) {
-    return sampleRevealsFor(data, FAILED_SAMPLE_SET_ID, "testdata/failed");
-}
-/** T045: reveals of testdata/multilayer from built-in RT_DATA. */
-function multilayerSampleReveals(data) {
-    return sampleRevealsFor(data, MULTILAYER_SAMPLE_SET_ID, "testdata/multilayer");
-}
 /* Floor grouping by cell prefix (global script). Prefix-less cells attach
    to the single floor. Group-visibility switching shows only the active
    floor's moves and observations. */
@@ -380,17 +338,31 @@ function renderAll() {
     }
     const start = currentStatic ? currentStatic.puzzle.start_cell : "A1";
     const onFloor = (cell) => !multi || floorKeyOfCell(cell) === (visible || logFloorKeys[0]);
-    const cells = [start].concat(moveCells(log, stepIndex)).filter(onFloor);
+    const moves = moveCells(log, stepIndex);
+    const seq = [start].concat(moves);
+    const cells = seq.filter(onFloor);
     const pts = cells.map((c) => cellToXY(c, columns, rows));
     const tail = logOutcome(log, stepIndex);
-    const sealTail = !!tail && ((tail.type === "end" && tail.outcome !== "completed") ||
-        (tail.type === "puzzle_ended" && tail.result === "failed"));
-    const trail = buildTrail(pts, sealTail);
-    contentGroup.add(trail);
+    const redSeal = [];
+    const filteredIndex = (u) => {
+        if (!onFloor(seq[u]))
+            return null;
+        let k = -1;
+        for (let i = 0; i <= u; i++)
+            if (onFloor(seq[i]))
+                k++;
+        return k;
+    };
+    if (tail && tail.type === "end" && tail.outcome !== "completed") {
+        if (cells.length >= 2)
+            redSeal.push(cells.length - 2, cells.length - 1);
+        else if (cells.length === 1)
+            redSeal.push(0);
+    }
     // Mark puzzle results at the cell where each puzzle ended.
     const events = log.events.slice(0, stepIndex);
     let mi = 0;
-    const moves = moveCells(log, stepIndex);
+    const marks = [];
     for (const e of events) {
         if (e.type === "move")
             mi++;
@@ -400,9 +372,21 @@ function renderAll() {
             if (!atCell || !onFloor(atCell))
                 continue;
             const pos = cellToXY(atCell, columns, rows);
-            addResultMarker(trail, pos, pe.result);
+            marks.push({ pos, result: pe.result });
+            if (pe.result === "failed") {
+                const j = filteredIndex(mi);
+                if (j !== null) {
+                    if (j > 0)
+                        redSeal.push(j - 1);
+                    redSeal.push(j);
+                }
+            }
         }
     }
+    const trail = buildTrail(pts, redSeal);
+    for (const mk of marks)
+        addResultMarker(trail, mk.pos, mk.result);
+    contentGroup.add(trail);
     const movesTotal = moveCells(log, log.events.length).length;
     const info = el("trail-info");
     if (info) {
@@ -535,6 +519,9 @@ function builtinLogEntries(data) {
     }
     for (const name of Object.keys(data.testdata)) {
         out.push({ label: "testdata/" + name, log: data.testdata[name], key: "testdata/" + name });
+    }
+    for (const name of Object.keys(data.refusal)) {
+        out.push({ label: "refusal/" + name, log: data.refusal[name], key: "refusal/" + name });
     }
     return out;
 }
@@ -957,7 +944,7 @@ function parchmentTexture() {
 }
 /* Footprint trajectory: Line + Points (global script). */
 /** Points = move count + 1 (caller prepends start_cell). */
-function buildTrail(points, sealTail) {
+function buildTrail(points, sealAt) {
     const group = new THREE.Group();
     const positions = new Float32Array(points.length * 3);
     const colors = new Float32Array(points.length * 3);
@@ -967,7 +954,7 @@ function buildTrail(points, sealTail) {
         positions[i * 3] = points[i].x;
         positions[i * 3 + 1] = 0.05;
         positions[i * 3 + 2] = points[i].z;
-        const last = sealTail && i >= points.length - 2;
+        const last = sealAt.indexOf(i) !== -1;
         const c = last ? seal : ink;
         colors[i * 3] = c.r;
         colors[i * 3 + 1] = c.g;
@@ -982,7 +969,7 @@ function buildTrail(points, sealTail) {
     dotGeo.setAttribute("position", new THREE.BufferAttribute(positions.slice(), 3));
     const dots = new THREE.Points(dotGeo, new THREE.PointsMaterial({ size: 0.22, vertexColors: false, color: ink }));
     group.add(dots);
-    if (sealTail && points.length > 0) {
+    if (points.length > 0 && sealAt.indexOf(points.length - 1) !== -1) {
         const tip = points[points.length - 1];
         const marker = new THREE.Mesh(new THREE.CircleGeometry(0.28, 24), new THREE.MeshBasicMaterial({ color: seal }));
         marker.rotation.x = -Math.PI / 2;

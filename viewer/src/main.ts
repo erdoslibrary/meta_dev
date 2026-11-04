@@ -82,20 +82,27 @@ function renderAll(): void {
   const start = currentStatic ? currentStatic.puzzle.start_cell : "A1";
   const onFloor = (cell: string): boolean =>
     !multi || floorKeyOfCell(cell) === (visible || logFloorKeys[0]);
-  const cells = [start].concat(moveCells(log, stepIndex)).filter(onFloor);
+  const moves = moveCells(log, stepIndex);
+  const seq = [start].concat(moves);
+  const cells = seq.filter(onFloor);
   const pts = cells.map((c) => cellToXY(c, columns, rows));
   const tail = logOutcome(log, stepIndex);
-  const sealTail = !!tail && (
-    (tail.type === "end" && tail.outcome !== "completed") ||
-    (tail.type === "puzzle_ended" && tail.result === "failed")
-  );
-  const trail = buildTrail(pts, sealTail);
-  contentGroup.add(trail);
+  const redSeal: number[] = [];
+  const filteredIndex = (u: number): number | null => {
+    if (!onFloor(seq[u])) return null;
+    let k = -1;
+    for (let i = 0; i <= u; i++) if (onFloor(seq[i])) k++;
+    return k;
+  };
+  if (tail && tail.type === "end" && tail.outcome !== "completed") {
+    if (cells.length >= 2) redSeal.push(cells.length - 2, cells.length - 1);
+    else if (cells.length === 1) redSeal.push(0);
+  }
 
   // Mark puzzle results at the cell where each puzzle ended.
   const events = log.events.slice(0, stepIndex);
   let mi = 0;
-  const moves = moveCells(log, stepIndex);
+  const marks: { pos: TrailPoint; result: "solved_by_dialogue" | "solved_with_hint" | "failed" }[] = [];
   for (const e of events) {
     if (e.type === "move") mi++;
     if (e.type === "puzzle_ended") {
@@ -103,9 +110,19 @@ function renderAll(): void {
       const atCell = mi === 0 ? cells[0] : moves[mi - 1];
       if (!atCell || !onFloor(atCell)) continue;
       const pos = cellToXY(atCell, columns, rows);
-      addResultMarker(trail, pos, pe.result);
+      marks.push({ pos, result: pe.result });
+      if (pe.result === "failed") {
+        const j = filteredIndex(mi);
+        if (j !== null) {
+          if (j > 0) redSeal.push(j - 1);
+          redSeal.push(j);
+        }
+      }
     }
   }
+  const trail = buildTrail(pts, redSeal);
+  for (const mk of marks) addResultMarker(trail, mk.pos, mk.result);
+  contentGroup.add(trail);
 
   const movesTotal = moveCells(log, log.events.length).length;
   const info = el("trail-info");
@@ -233,6 +250,9 @@ function builtinLogEntries(data: RtData): { label: string; log: RunLog; key: str
   }
   for (const name of Object.keys(data.testdata)) {
     out.push({ label: "testdata/" + name, log: data.testdata[name], key: "testdata/" + name });
+  }
+  for (const name of Object.keys(data.refusal)) {
+    out.push({ label: "refusal/" + name, log: data.refusal[name], key: "refusal/" + name });
   }
   return out;
 }

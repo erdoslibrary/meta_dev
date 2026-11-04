@@ -3,7 +3,7 @@
 interface TrailPoint { x: number; z: number; }
 
 /** Points = move count + 1 (caller prepends start_cell). */
-function buildTrail(points: TrailPoint[], sealTail: boolean): THREE.Group {
+function buildTrail(points: TrailPoint[], sealAt: number[]): THREE.Group {
   const group = new THREE.Group();
   const positions = new Float32Array(points.length * 3);
   const colors = new Float32Array(points.length * 3);
@@ -13,7 +13,7 @@ function buildTrail(points: TrailPoint[], sealTail: boolean): THREE.Group {
     positions[i * 3] = points[i].x;
     positions[i * 3 + 1] = 0.05;
     positions[i * 3 + 2] = points[i].z;
-    const last = sealTail && i >= points.length - 2;
+    const last = sealAt.indexOf(i) !== -1;
     const c = last ? seal : ink;
     colors[i * 3] = c.r;
     colors[i * 3 + 1] = c.g;
@@ -35,7 +35,7 @@ function buildTrail(points: TrailPoint[], sealTail: boolean): THREE.Group {
     new THREE.PointsMaterial({ size: 0.22, vertexColors: false, color: ink })
   );
   group.add(dots);
-  if (sealTail && points.length > 0) {
+  if (points.length > 0 && sealAt.indexOf(points.length - 1) !== -1) {
     const tip = points[points.length - 1];
     const marker = new THREE.Mesh(
       new THREE.CircleGeometry(0.28, 24),
