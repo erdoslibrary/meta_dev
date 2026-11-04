@@ -21,6 +21,8 @@
 **변경 사유 (2026-11-05)**: T032 완료 반영. `viewer/dist/data.js`에서 `next_object_id`·`sha256`·`reason`·`"hints"` 0건, `panels.ts`·`main.ts` DOM 삽입점 전수 감사 및 `reveals` 노출 규칙(`failed` 직후 1회·`solved_*` 무표시·`null` 무문구·파일 경로 양쪽 선택 시만) 코드 대조, `testdata/failed` 화면 증거 fullPage 촬영. 위반 0건.
 **변경 사유 (2026-11-05)**: T031 완료 반영. V-1(빌드·콘솔 0건)·V-2(내장 6종 발자국·거부 2종·파일 r02, fullPage 4장)·V-3(oracle 완주·피드 대조·파일 로그만/로그+퍼즐, fullPage 3장)·V-4(1F 3점·2F 1점·위치 유지·단층 UI 숨김, fullPage 3장)·V-5(랜딩 3요소·연출 `INTRO_MS` 2600ms·진입 버튼·api-error 완주 아님·배포 묶음, fullPage 2장) 전 항목 PASS 및 V-6 `unittest` 83 통과. V-5 랜딩 증거는 영어 전용 전환 뒤 재촬영한 `.shots/t031-v5-landing-v3.png`·`.shots/t031-v5-entered-v3.png`로 대체한다.
 **변경 사유 (2026-11-05)**: 사용자 결정 3건 반영. (1) 로그는 추가 실행 없이 5회로 확정(`requirement.md` 결정 줄). (2) 랜딩 화면 영어 전용 — `viewer/index.html`의 여는 주문 `Don't Panic`, 진입 버튼 `Enter`, 부제 요소 삭제(PRD OPEN-4 보완, spec FR-009 예외). (3) 닫는 주문은 별도 화면 없이 `end(completed)` 결과 박스 꼬리말로 표시 — `viewer/src/panels.ts`가 `완주` 줄을 유지하고 그 아래 `So long, and thanks for all the fish`를 `closing` 클래스로 덧붙인다(PRD OPEN-4 보완, spec FR-006, contracts Rendering Contract).
+**변경 사유 (2026-11-05)**: 뷰어 영어 기본(FR-009) 작업 T048~T055 추가. T030의 "default language Korean"은 당시 기록으로 두고 T048~T055가 대체한다.
+**변경 사유 (2026-11-05)**: T048~T055 완료 반영. V-7(en 기대값 일치·`?lang=ko` 화면이 번역 전 HEAD와 동일·`#ghost` 줄 수 동일·한글 잔존은 `i18n.ts`와 `theme.ts` 도장 1줄)과 V-6 `unittest` 83 통과. 게이트 중 발견한 회귀 1건(ko 모드 제출 영어 병기)은 `ansGloss()` en 한정으로 고쳤다. 탭 제목은 `Real-to-Sim Archive`로 통일했다.
 
 ## Format: `[ID] [P?] [Story] Description`
 
@@ -138,11 +140,19 @@
 
 ## Final Phase: Polish & Cross-Cutting Concerns
 
-**Purpose**: 언어·노출 감사·전체 회귀. 영어 전체 번역은 시간 여유 시 별도 작업 (FR-009, Out of Scope).
+**Purpose**: 언어·노출 감사·전체 회귀. 영어 UI는 T048~T055 (FR-009, V-7).
 
 - [X] T030 Polish Korean copy in `viewer/index.html` and `viewer/src/*.ts` strings (default language Korean; no webfonts)
 - [X] T032 Audit exposure compliance in viewer screens and outputs including `viewer/dist/data.js`: photo paths banned on screen, hashes (`sha256`) banned in artifacts; `failed` answers (`puzzle.json` `answer` field) appear only once right after `puzzle_ended(failed)` together with that puzzle's `next_instruction` (`null` shows no next-place phrase; solved puzzles show none, next place via `on_correct`) (exception per decision A: `on_correct` right after correct submission and `answer_submitted.value` display allowed, `reason` excluded from display and `data.js`); no `next_object_id` (full ban), unreleased hints, hint bodies, or non-`failed` puzzle answers (FR-005, data-model Display Exposure)
 - [X] T031 Run quickstart validation V-1 through V-5 via Playwright MCP only (console collection → real-UI operation → before/after screenshots in `.shots/` opened with `read_file` → PASS/FAIL per item) plus V-6 regression gate `.venv/bin/python -m unittest discover tests -v` (never bare `python`/`python3`)
+- [X] T048 Create `viewer/src/i18n.ts`: `lang` from `?lang=ko` (default en), `t()` UI dictionary, `td()` data source-text → English map (FR-009)
+- [X] T049 Replace Korean literals in `viewer/index.html` with English and add one EN/KO toggle link; keep all existing ids/classes
+- [X] T050 Route `viewer/src/panels.ts` strings through `t()`/`td()`; keep `answer_submitted.value` original with optional English gloss
+- [X] T051 Route `viewer/src/logparse.ts` refusal reasons through `t()`
+- [X] T052 Route `viewer/src/main.ts` strings through `t()` and apply ko overlay to static `index.html` text
+- [X] T053 Route `viewer/src/dataload.ts` strings through `t()`
+- [X] T054 Route `viewer/src/floors.ts` strings through `t()`
+- [X] T055 Run quickstart V-7 plus V-6 gate; rebuild `viewer/dist/app.js` once before validation
 
 ---
 

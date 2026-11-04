@@ -156,8 +156,8 @@ function renderAll(): void {
   const movesTotal = moveCells(log, log.events.length).length;
   const info = el("trail-info");
   if (info) {
-    const scope = multi ? "층 " + floorLabel(visible || logFloorKeys[0]) + " " : "";
-    info.textContent = scope + "발자국 " + pts.length + "점 (move " + movesTotal + " + 시작점)";
+    const scope = multi ? t("trail.scope", floorLabel(visible || logFloorKeys[0])) + " " : "";
+    info.textContent = scope + t("trail.info", pts.length, movesTotal);
   }
   const curStep =
     chronicleSteps.length > 0 && chronicleIdx < chronicleSteps.length
@@ -168,13 +168,13 @@ function renderAll(): void {
     chronicleIdx < chronicleSteps.length - 1 &&
     chronicleSteps[chronicleIdx + 1].upto === st.t;
   if (!inPartialSubStep && tail && tail.type === "end" && tail.outcome !== "completed") {
-    setStatus("끊김(" + tail.outcome + "): 끊긴 지점에서 멈춤. 끝까지 재생되지 않음.");
+    setStatus(t("status.cut", tail.outcome));
   } else if (!inPartialSubStep && tail && tail.type === "puzzle_ended" && tail.result === "failed") {
-    setStatus("실패 구간: Seal Red 표시.");
+    setStatus(t("status.failed"));
   } else if (!inPartialSubStep && st.t >= log.events.length) {
-    setStatus("재생 완료.");
+    setStatus(t("status.done"));
   } else {
-    setStatus("재생 중: " + st.t + "/" + log.events.length);
+    setStatus(t("status.playing", st.t, log.events.length));
   }
   const feed = el("ghost");
   const resultBox = el("result");
@@ -204,7 +204,7 @@ function setLog(log: RunLog, data: RtData | null, logKey: string | null): void {
     chronicleSteps = [];
     chronicleIdx = 0;
     renderAll();
-    setStatus("재생 거부: " + bad);
+    setStatus(t("status.reject", bad));
     return;
   }
   currentLog = log;
@@ -334,12 +334,62 @@ function fillLogSelect(data: RtData | null): void {
   if (entries.length > 0) setLog(entries[0].log, data, entries[0].key);
 }
 
+/** Overwrite English static text with Korean when ?lang=ko. No DOM changes. */
+function applyKoStaticText(): void {
+  if (LANG !== "ko") return;
+  document.title = t("title");
+  const setFirstText = (parent: HTMLElement | null, text: string): void => {
+    if (!parent) return;
+    const kids = parent.childNodes;
+    for (let i = 0; i < kids.length; i++) {
+      const n = kids[i];
+      if (n.nodeType === 3 && n.textContent && n.textContent.trim().length > 0) {
+        n.textContent = text;
+        return;
+      }
+    }
+  };
+  const logsel = el("logsel");
+  if (logsel && logsel.parentElement) {
+    setFirstText(logsel.parentElement, t("ctrl.record"));
+    logsel.setAttribute("aria-label", t("ctrl.logsel.aria"));
+  }
+  const floor = el("floor");
+  if (floor && floor.parentElement) {
+    setFirstText(floor.parentElement, t("ctrl.floor"));
+    floor.setAttribute("aria-label", t("ctrl.floor.aria"));
+  }
+  const logfile = el("logfile");
+  if (logfile && logfile.parentElement) setFirstText(logfile.parentElement, t("file.log"));
+  const puzzlefile = el("puzzlefile");
+  if (puzzlefile && puzzlefile.parentElement) setFirstText(puzzlefile.parentElement, t("file.puzzle"));
+  const play = el("play");
+  if (play) play.textContent = t("btn.play");
+  const step = el("step");
+  if (step) step.textContent = t("btn.step");
+  const reset = el("reset");
+  if (reset) reset.textContent = t("btn.reset");
+  const hint = document.querySelector(".map-hint");
+  if (hint) hint.textContent = t("map.hint");
+  const h2 = document.querySelector(".chronicle-head h2");
+  if (h2) h2.textContent = t("chronicle");
+}
+
+function wireLangToggle(): void {
+  const a = el("langtoggle") as HTMLAnchorElement | null;
+  if (!a) return;
+  a.textContent = t("lang.toggle");
+  a.href = LANG === "ko" ? window.location.pathname : "?lang=ko";
+}
+
 function startApp(): void {
+  applyKoStaticText();
+  wireLangToggle();
   const canvas = document.getElementById("map") as HTMLCanvasElement | null;
   if (canvas) startScene(canvas);
   const data = builtinData();
   fillLogSelect(data);
-  if (!data) setStatus("내장 기록 없음. 파일로 로그를 열어주세요.");
+  if (!data) setStatus(t("status.nodata"));
 
   const enter = el("enter");
   if (enter) {
@@ -388,10 +438,10 @@ function startApp(): void {
               }
             }
           }
-          setStatus("퍼즐 데이터 선택됨.");
+          setStatus(t("status.puzzle.ok"));
           renderAll();
         },
-        (err) => setStatus("퍼즐 읽기 실패: " + String(err && (err as Error).message || err))
+        (err) => setStatus(t("status.puzzle.fail", String(err && (err as Error).message || err)))
       );
     });
   }
@@ -401,7 +451,7 @@ function startApp(): void {
       if (!file.files || file.files.length === 0) return;
       loadLogFile(file.files[0]).then(
         (log) => setLog(log, builtinData(), null),
-        (err) => setStatus("재생 거부: " + String(err && (err as Error).message || err))
+        (err) => setStatus(t("status.reject", String(err && (err as Error).message || err)))
       );
     });
   }

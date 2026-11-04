@@ -45,5 +45,5 @@ function floorForKey(space: SpaceData, key: string): SpaceFloor | null {
 
 /** Display label for a floor key. */
 function floorLabel(key: string): string {
-  return key === "" ? "단층" : key;
+  return key === "" ? t("floor.single") : key;
 }

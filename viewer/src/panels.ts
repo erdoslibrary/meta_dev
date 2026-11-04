@@ -78,14 +78,14 @@ function panelPhoto(
     frame.textContent = "";
     const empty = document.createElement("div");
     empty.className = "photo-empty";
-    empty.textContent = "사진 없음";
+    empty.textContent = t("photo.empty");
     frame.appendChild(empty);
   });
   if (src) img.src = src;
   else {
     const empty = document.createElement("div");
     empty.className = "photo-empty";
-    empty.textContent = "사진 없음";
+    empty.textContent = t("photo.empty");
     frame.appendChild(empty);
     parent.appendChild(frame);
     return;
@@ -145,19 +145,19 @@ function showFailedAnswer(
   if (!opts.fileLog) {
     const rev = opts.reveals ? opts.reveals[String(n)] : undefined;
     if (rev && rev.answer) {
-      panelText(feed, "정답: " + rev.answer);
-      if (rev.next_instruction) panelText(feed, "다음: " + rev.next_instruction);
+      panelText(feed, t("answer.label", rev.answer));
+      if (rev.next_instruction) panelText(feed, t("answer.next", td(rev.next_instruction)));
     } else {
-      panelText(feed, "정답 데이터 없음");
+      panelText(feed, t("answer.missing"));
     }
     return;
   }
   const entry = findEntry(opts.filePuzzle, n) as FilePuzzleEntry | null;
   if (entry && entry.answer) {
-    panelText(feed, "정답: " + entry.answer);
-    if (entry.next_instruction) panelText(feed, "다음: " + entry.next_instruction);
+    panelText(feed, t("answer.label", entry.answer));
+    if (entry.next_instruction) panelText(feed, t("answer.next", td(entry.next_instruction)));
   } else {
-    panelText(feed, "정답 데이터 없음");
+    panelText(feed, t("answer.missing"));
   }
 }
 
@@ -174,16 +174,17 @@ function renderPanels(
   if (log.persona) {
     panelText(
       feed,
-      "참가자: " + log.persona.age + "세 " + log.persona.job +
-        " · 어휘 " + log.persona.vocab + " · " + log.persona.thinking,
+      t(
+        "feed.participant", log.persona.age, td(log.persona.job),
+        td(log.persona.vocab), td(log.persona.thinking)
+      ),
       "chron-intro"
     );
   }
   if (staticPuzzle && staticPuzzle.start_instruction) {
     panelText(
       feed,
-      "시작 지시: " + staticPuzzle.start_instruction +
-        " (시작점 " + staticPuzzle.start_cell + ")",
+      t("feed.start", td(staticPuzzle.start_instruction), staticPuzzle.start_cell),
       "chron-intro"
     );
   }
@@ -206,7 +207,7 @@ function renderPanels(
       const room = findRoomName(opts.space, m.value);
       panelText(
         feed,
-        "이동: " + prevCell + " → " + m.value + (room ? " (" + room + ")" : ""),
+        t("feed.move", prevCell, m.value, room ? " (" + td(room) + ")" : ""),
         "chron-move"
       );
       continue;
@@ -222,13 +223,13 @@ function renderPanels(
       const file = obj && obj.photos.length > 0 ? obj.photos[0] : "";
       panelPhoto(
         feed, file ? opts.photoBase + "photos/" + file : "",
-        obj ? obj.label : "사물 사진"
+        obj ? obj.label : t("photo.fallback")
       );
-      panelText(feed, "보기: " + v.value, "chron-view");
+      panelText(feed, t("feed.view", v.value), "chron-view");
       if (obj && (obj.label || obj.description)) {
         panelText(
           feed,
-          obj.label + (obj.description ? " — " + obj.description : ""),
+          td(obj.label) + (obj.description ? " — " + td(obj.description) : ""),
           "chron-desc"
         );
       }
@@ -246,41 +247,44 @@ function renderPanels(
       );
       if (subLimit >= 1) {
         if (npcObj && npcObj.image) {
-          panelPhoto(feed, opts.photoBase + npcObj.image, name);
+          panelPhoto(feed, opts.photoBase + npcObj.image, td(name));
         }
-        panelText(feed, "등장: " + name, "chron-npc");
+        panelText(feed, t("feed.appear", td(name)), "chron-npc");
       }
       if (entry && entry.dialogue && entry.dialogue.length > 0) {
         for (let k = 0; k < entry.dialogue.length; k++) {
           if (subLimit >= 2 + k) {
-            panelText(feed, name + ": " + entry.dialogue[k].text, "chron-dialogue");
+            panelText(feed, td(name) + ": " + td(entry.dialogue[k].text), "chron-dialogue");
           }
         }
       } else if (subLimit >= 2) {
-        panelText(feed, name + ": (대화)", "chron-dialogue");
+        panelText(feed, t("feed.nodialogue", td(name)), "chron-dialogue");
       }
       if (hasQuiz && subLimit >= 2 + dLen && entry) {
         if (entry.image && entry.image.path) {
           panelPhoto(
             feed,
             opts.photoBase + entry.image.path,
-            "퍼즐 " + n.puzzle + " 퀴즈 그림"
+            t("feed.quizpic", n.puzzle)
           );
         }
         if (entry.question) {
           const meta = entry.answer_letter_count
-            ? " (" + entry.answer_letter_count + "글자" +
-              (entry.max_attempts ? " · 시도 " + entry.max_attempts + "회)" : ")")
+            ? (entry.max_attempts
+              ? t("quiz.meta.full", entry.answer_letter_count, entry.max_attempts)
+              : t("quiz.meta.short", entry.answer_letter_count))
             : "";
-          panelText(feed, "문제: " + entry.question + meta, "chron-quiz");
+          panelText(feed, t("feed.quiz", td(entry.question), meta), "chron-quiz");
         }
       }
     } else if (e.type === "answer_submitted") {
       const a = e as AnswerSubmittedEvent;
       if (subLimit >= 1) {
+        const dv = a.value +
+          (ansGloss(a.value) != null ? " (" + ansGloss(a.value) + ")" : "");
         panelText(
           feed,
-          "제출: " + a.value + (a.correct ? " (정답)" : " (오답)"),
+          t("feed.submit", dv, a.correct ? t("submit.ok") : t("submit.ng")),
           a.correct ? "ans-ok" : "ans-wrong"
         );
       }
@@ -288,19 +292,19 @@ function renderPanels(
         const entry = findEntry(staticPuzzle, a.puzzle);
         if (entry) {
           if (a.correct && entry.on_correct) {
-            panelText(feed, entry.on_correct, "chron-dialogue");
+            panelText(feed, td(entry.on_correct), "chron-dialogue");
           } else if (!a.correct && entry.on_wrong) {
-            panelText(feed, entry.on_wrong, "chron-dialogue");
+            panelText(feed, td(entry.on_wrong), "chron-dialogue");
           }
         }
       }
     } else if (e.type === "hint_revealed") {
-      panelText(feed, "힌트 Lv." + (e as HintRevealedEvent).level, "chron-hint");
+      panelText(feed, t("feed.hint", (e as HintRevealedEvent).level), "chron-hint");
     } else if (e.type === "rejected") {
       const r = e as RejectedEvent;
       panelText(
         feed,
-        "거절(" + (r.attempted_action || "행동") + "): " + r.error,
+        t("feed.reject", r.attempted_action || t("reject.action"), r.error),
         "chron-reject"
       );
     } else if (e.type === "puzzle_ended") {
@@ -308,7 +312,7 @@ function renderPanels(
       ended.push(pe);
       panelText(
         feed,
-        "퍼즐 " + pe.puzzle + " 결과: " + pe.result,
+        t("feed.result", pe.puzzle, pe.result),
         pe.result === "failed" ? "seal" : undefined
       );
       if (pe.result === "failed") showFailedAnswer(feed, pe.puzzle, opts);
@@ -316,14 +320,14 @@ function renderPanels(
   }
 
   for (const pe of ended) {
-    panelText(resultBox, "퍼즐 " + pe.puzzle + ": " + pe.result);
+    panelText(resultBox, t("result.puzzle", pe.puzzle, pe.result));
   }
   const last = events.length > 0 ? events[events.length - 1] : null;
   if (last && last.type === "end") {
     const outcome = (last as EndEvent).outcome;
     panelText(
       resultBox,
-      outcome === "completed" ? "완주" : "끊김(" + outcome + "): 완주 아님"
+      outcome === "completed" ? t("result.done") : t("result.cut", outcome)
     );
     if (outcome === "completed") {
       panelText(resultBox, "So long, and thanks for all the fish", "closing");
