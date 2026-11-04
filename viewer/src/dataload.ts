@@ -13,12 +13,12 @@ function builtinData(): RtData | null {
 function readJsonFile(file: File): Promise<unknown> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.onerror = () => reject(new Error("파일 읽기 실패"));
+    reader.onerror = () => reject(new Error(t("err.fileread")));
     reader.onload = () => {
       try {
         resolve(JSON.parse(String(reader.result)) as unknown);
       } catch (e) {
-        reject(new Error("JSON 파싱 실패: " + String(e)));
+        reject(new Error(t("err.json", String(e))));
       }
     };
     reader.readAsText(file);

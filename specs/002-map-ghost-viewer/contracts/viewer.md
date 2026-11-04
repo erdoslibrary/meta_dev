@@ -10,6 +10,8 @@
 **변경 사유 (2026-11-04)**: 결정 E 페이로드 분리를 반영. 세트 공용 `puzzle`에는 `answer`·`next_instruction`을 넣지 않고, 로그별 정답은 `reveals/<로그 키>`에 그 로그에서 `failed`인 퍼즐만 둔다(`next_instruction`이 `null`이면 생략). `sets/<id>/reveals`와 `sample_sets/<id>/reveals` 모두 같은 규칙을 따른다.
 **변경 사유 (2026-11-05)**: PRD OPEN-4 보완 반영. Rendering Contract에 주문 문구 배치(랜딩 영어 전용·닫는 주문 결과 박스 꼬리말)를 추가한다.
 **변경 사유 (2026-11-04)**: 결정 E 키 규칙을 통일. 정답은 로그가 연결된 세트(세트 조회 결과 `sets/<id>` 또는 `sample_sets/<id>`)의 `reveals`에 둔다. 키는 실로그 상대 경로(`r01`, `oracle/r0`)·표본 로그 `testdata/<이름>`·재생 거부 표본 `refusal/<이름>`, 퍼즐 번호 키는 문자열(`"1"`)이다.
+**변경 사유 (2026-11-05)**: 뷰어 영어 기본(FR-009) 반영. 인용 표시 문구는 `?lang=ko` 기준임을 명시한다.
+**변경 사유 (2026-11-05)**: "실패 로그" 표현이 FR-006(`end(completed)` 기준)과 다르게 읽힐 수 있어 끊김 로그로 한정한다. 동작 변경 없음.
 
 ## Input Contract (읽기 전용, 형식 변경 없음)
 
@@ -45,7 +47,7 @@
 - `requestAnimationFrame` 반복 렌더. 1회성 `render()` 페이지는 쓰지 않는다.
 - `webglcontextlost`에서 `preventDefault()` 호출, `webglcontextrestored`에서 장면 재구성.
 - 평면 = `PlaneGeometry`, 지도 궤적 = `Line`, 발자국 = `Points`, 층 = 그룹 표시 전환.
-- 주문 문구: 여는 주문은 랜딩 화면에만, 닫는 주문은 `end(completed)` 결과 박스 꼬리말 한 줄에만 둔다. 완주 표시(`완주`)는 유지하고 그 아래에 덧붙인다. 끊김·실패 로그에는 닫는 주문을 쓰지 않는다. 랜딩 화면은 영어 전용이다.
+- 주문 문구: 여는 주문은 랜딩 화면에만, 닫는 주문은 `end(completed)` 결과 박스 꼬리말 한 줄에만 둔다. 완주 표시(`완주`)는 유지하고 그 아래에 덧붙인다. 끊김 로그(`end(action_limit)`·`end(api_error)`)에는 닫는 주문을 쓰지 않는다. 퍼즐이 `failed`여도 실행이 `end(completed)`로 끝났으면 닫는 주문을 표시한다(FR-006). 랜딩 화면은 영어 전용이다. 완주 표시 문구 `완주`는 `?lang=ko` 기준이며 영어 화면은 i18n 사전의 대응 문구를 쓴다.
 - 색·서체: Base `#E9DCC0`–`#DCCFAC`, Ink `#2A2118`, Seal Red `#A0322B`(끊김·실패 구간만 — `puzzle_ended(failed)`·`end(action_limit)`·`end(api_error)`, 랜딩 화면 예외; 실패 시 붉은색은 `퍼즐 N 결과: failed` 줄에 쓰고 `정답: …` 문구는 기본 먹색으로 표시), 시스템 세리프, 웹폰트 없음. SVG `stroke-dashoffset` 잉크 효과는 랜딩 화면에만 쓴다. 미탐험 흐림·탐험 선명.
 
 ## Display Exposure Contract (FR-005, 결정 A/B)
@@ -53,7 +55,7 @@
 - 표시 가능: 로그 확인 시점의 FR-001 항목만. `on_correct`는 맞힌 제출 뒤에 표시하며 대사에 포함된 다음 장소와 정답 문자열도 그대로 표시한다. `answer_submitted.value`는 제출 원문 표시를 허용한다.
 - 정답 금지 대상은 `puzzle.json`의 `answer` 필드다. `puzzle_ended(failed)` 직후 해당 퍼즐만 1회 표시. `failed`가 아닌 퍼즐 정답은 산출물에 넣지 않는다.
 - `next_instruction`은 `puzzle_ended(failed)` 직후 해당 퍼즐의 `answer`와 함께 1회 표시한다. 맞힌 퍼즐에는 표시하지 않으며, 맞힌 퍼즐의 다음 장소는 `on_correct`로 전달한다. 값이 `null`이면(마지막 퍼즐) 다음 장소 문구를 표시하지 않는다.
-- 파일 선택 로그의 `failed` 정답·`next_instruction`은 로그와 `puzzle.json`을 함께 선택했을 때만 표시. 없으면 "정답 데이터 없음"만 표시하고 다음 장소 문구는 표시하지 않는다.
+- 파일 선택 로그의 `failed` 정답·`next_instruction`은 로그와 `puzzle.json`을 함께 선택했을 때만 표시. 없으면 "정답 데이터 없음"만 표시하고 다음 장소 문구는 표시하지 않는다. "정답 데이터 없음"은 `?lang=ko` 기준 문구다.
 - `hint_revealed`는 레벨만 표시(본문 제외).
 - 표시 금지: `next_object_id`(전면 금지), 사진 경로(화면), 해시(산출물), `reason`(표시·`data.js` 제외), 미공개 힌트.
 

@@ -9,6 +9,7 @@
 **변경 사유 (2026-11-04)**: V-1을 T037과 맞춰 `.venv/bin/python viewer/tools/embed.py`를 먼저 실행하도록 고친다(권장 7).
 **변경 사유 (2026-11-04)**: 지시 1~15 문서 수정 반영. V-3 next_instruction 표시·null 확인은 3번 표본으로 한다고 명시한다.
 **변경 사유 (2026-11-05)**: PRD OPEN-4 보완 반영. V-5에 랜딩 영어 전용과 닫는 주문 꼬리말 확인을 추가한다.
+**변경 사유 (2026-11-05)**: 뷰어 영어 기본(FR-009) 검증 V-7 추가.
 
 구현 코드 없이 검증만 기술한다. 전체 실행 가이드는 tasks·구현 단계에서 확장한다. 화면 확인은 Playwright MCP로만 하고, 셸에서 Chrome을 실행하지 않는다(`implementation-notes.md` §3·§5).
 
@@ -48,7 +49,7 @@ viewer/node_modules/.bin/tsc -p viewer
 - 기대: 전 퍼즐 `solved_by_dialogue`와 `end(completed)`까지 끊김 없이 재생.
 - 기대: `view` 지점에서 사물 사진(`<img>`)과 `npc_dialogue` 표시, 퍼즐 종료마다 결과 표시. `on_correct`는 맞힌 제출 뒤에 표시하며 대사에 포함된 다음 장소와 정답 문자열도 그대로 표시한다. `answer_submitted.value`는 제출 원문 표시를 허용한다.
 - 기대: `failed` 포함 표본(`viewer/testdata/`)에서는 `puzzle_ended(failed)` 직후 해당 퍼즐 정답(`puzzle.json`의 `answer` 필드)과 `next_instruction` 1회 표시. `failed`가 아닌 퍼즐 정답은 화면·산출물에 없음. 맞힌 퍼즐에는 `next_instruction`을 표시하지 않으며, 맞힌 퍼즐의 다음 장소는 `on_correct`로 전달한다. `next_instruction`이 `null`이면(마지막 퍼즐) 다음 장소 문구를 표시하지 않는다. `next_instruction` 표시와 `null` 확인은 3번 표본(퍼즐 2개: 1번 `failed` 값 있음·2번 `failed` `null`)으로 한다.
-- 기대: 파일 선택 로그의 `failed` 정답·`next_instruction`은 로그와 `puzzle.json`을 함께 선택했을 때만 표시하고, 없으면 "정답 데이터 없음"만 표시하고 다음 장소 문구는 표시하지 않는다. 정답 금지 대상은 `puzzle.json`의 `answer` 필드로 한정한다.
+- 기대: 파일 선택 로그의 `failed` 정답·`next_instruction`은 로그와 `puzzle.json`을 함께 선택했을 때만 표시하고, 없으면 "정답 데이터 없음"만 표시하고 다음 장소 문구는 표시하지 않는다. 정답 금지 대상은 `puzzle.json`의 `answer` 필드로 한정한다. "정답 데이터 없음"은 `?lang=ko` 기준 문구다.
 
 ### V-4: US3 층 전환 (Slice 3)
 
@@ -71,8 +72,16 @@ viewer/node_modules/.bin/tsc -p viewer
 
 - 기대: 전원 통과. `python`·`python3` 직접 사용 없음.
 
+### V-7: 영어화 (2026-11-05)
+
+- 기대: 쿼리 없이 열면 영어, `?lang=ko`면 한국어. 토글 링크 1개로 전환한다.
+- 기대: `#trail-info` 영어 형식은 `Footprints N pts (move M + start)`, 다층은 앞에 `Floor <층> `. 점 개수는 V-2와 같다.
+- 기대: `?lang=ko` 화면의 `#trail-info`·`#status`·`#ghost`·`#result` 문자열이 번역 전 HEAD 화면과 같다(토글 링크 제외).
+- 기대: 영어 화면의 로그별 `#ghost` 줄 수가 번역 전과 같다.
+- 기대: `viewer/src/*.ts`·`index.html`의 한글은 `i18n.ts`와 `theme.ts` 도장 1줄에만 남는다.
+
 ## Out of Scope (plan 이후·구현 단계)
 
-- 영어 전체 번역(뷰어 UI·보고서·퍼즐 데이터, 잔여 시간 있을 때).
+- 보고서·퍼즐 데이터 영어화(뷰어 UI 영어화는 V-7로 범위 안).
 - 003 마우스 평면도 빌더.
 - 주문 진입 방식(버튼/자동)은 Slice 4 착수 시 정한다.
