@@ -13,17 +13,39 @@ function onSceneRebuild(hook: () => void): void {
 }
 
 function sceneSize(): { w: number; h: number } {
-  const host = canvasEl && canvasEl.parentElement;
-  const w = host ? host.clientWidth : 800;
-  const h = host ? host.clientHeight : 600;
+  const w = canvasEl ? canvasEl.clientWidth : 800;
+  const h = canvasEl ? canvasEl.clientHeight : 600;
   return { w: Math.max(320, w), h: Math.max(240, h) };
+}
+
+let sceneColumns = 0;
+let sceneRows = 0;
+
+function extentHalf(): number {
+  if (sceneColumns > 0 && sceneRows > 0) return Math.max(sceneColumns, sceneRows) / 2 * 1.2;
+  return 8;
+}
+
+/** Fit the orthographic view to the active floor grid. */
+function setSceneExtent(columns: number, rows: number): void {
+  sceneColumns = columns;
+  sceneRows = rows;
+  if (sceneCamera) {
+    const { w, h } = sceneSize();
+    const half = extentHalf();
+    sceneCamera.left = -half * (w / h);
+    sceneCamera.right = half * (w / h);
+    sceneCamera.top = half;
+    sceneCamera.bottom = -half;
+    sceneCamera.updateProjectionMatrix();
+  }
 }
 
 function buildScene(): void {
   sceneHandle = new THREE.Scene();
   sceneHandle.background = new THREE.Color("#E9DCC0");
   const { w, h } = sceneSize();
-  const half = 8;
+  const half = extentHalf();
   sceneCamera = new THREE.OrthographicCamera(
     -half * (w / h), half * (w / h), half, -half, 0.1, 100
   );

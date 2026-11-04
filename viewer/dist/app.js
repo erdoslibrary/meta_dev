@@ -321,17 +321,21 @@ function renderAll() {
     scene.add(contentGroup);
     const log = currentLog;
     const space = currentStatic ? currentStatic.space : null;
-    const columns = space ? space.floors[0].columns : 6;
-    const rows = space ? space.floors[0].rows : 6;
     const multi = logFloorKeys.length > 1;
+    const activeKey = multi ? (activeFloor || logFloorKeys[0]) : logFloorKeys[0];
+    const activeFloorObj = space && activeKey !== undefined ? floorForKey(space, activeKey) : null;
+    const columns = activeFloorObj ? activeFloorObj.columns : 6;
+    const rows = activeFloorObj ? activeFloorObj.rows : 6;
+    setSceneExtent(columns, rows);
     const visible = multi ? activeFloor : null;
     if (space) {
         const explored = stepIndex > 0;
+        const targetFloor = activeFloorObj || space.floors[0];
         for (const floor of space.floors) {
             const key = floor.id || "";
             if (multi && key !== (visible || logFloorKeys[0]))
                 continue;
-            if (!multi && space.floors[0] !== floor)
+            if (!multi && floor !== targetFloor)
                 continue;
             contentGroup.add(buildFloorPlane(floor, explored));
         }
@@ -568,8 +572,6 @@ function startApp() {
     if (floorSel) {
         floorSel.addEventListener("change", () => {
             activeFloor = floorSel.value;
-            stepIndex = 0;
-            stopPlay();
             renderAll();
         });
     }
@@ -858,16 +860,36 @@ function onSceneRebuild(hook) {
     rebuildHook = hook;
 }
 function sceneSize() {
-    const host = canvasEl && canvasEl.parentElement;
-    const w = host ? host.clientWidth : 800;
-    const h = host ? host.clientHeight : 600;
+    const w = canvasEl ? canvasEl.clientWidth : 800;
+    const h = canvasEl ? canvasEl.clientHeight : 600;
     return { w: Math.max(320, w), h: Math.max(240, h) };
+}
+let sceneColumns = 0;
+let sceneRows = 0;
+function extentHalf() {
+    if (sceneColumns > 0 && sceneRows > 0)
+        return Math.max(sceneColumns, sceneRows) / 2 * 1.2;
+    return 8;
+}
+/** Fit the orthographic view to the active floor grid. */
+function setSceneExtent(columns, rows) {
+    sceneColumns = columns;
+    sceneRows = rows;
+    if (sceneCamera) {
+        const { w, h } = sceneSize();
+        const half = extentHalf();
+        sceneCamera.left = -half * (w / h);
+        sceneCamera.right = half * (w / h);
+        sceneCamera.top = half;
+        sceneCamera.bottom = -half;
+        sceneCamera.updateProjectionMatrix();
+    }
 }
 function buildScene() {
     sceneHandle = new THREE.Scene();
     sceneHandle.background = new THREE.Color("#E9DCC0");
     const { w, h } = sceneSize();
-    const half = 8;
+    const half = extentHalf();
     sceneCamera = new THREE.OrthographicCamera(-half * (w / h), half * (w / h), half, -half, 0.1, 100);
     sceneCamera.position.set(0, 10, 0.01);
     sceneCamera.lookAt(0, 0, 0);

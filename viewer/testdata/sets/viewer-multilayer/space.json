@@ -24,13 +24,13 @@
       ],
       "meters_per_pixel": 0.01,
       "origin_px": { "x": 0, "y": 300 },
-      "columns": 27,
+      "columns": 3,
       "rows": 3
     }
   ],
   "rooms": [
     { "name": "1층 휴게실 앞", "cells": "1F-A1:C3" },
-    { "name": "2층 복도", "cells": "2F-A1:AA3" }
+    { "name": "2층 복도", "cells": "2F-A1:C3" }
   ],
   "objects": [
     {

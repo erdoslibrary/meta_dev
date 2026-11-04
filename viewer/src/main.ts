@@ -66,16 +66,20 @@ function renderAll(): void {
 
   const log = currentLog;
   const space = currentStatic ? currentStatic.space : null;
-  const columns = space ? space.floors[0].columns : 6;
-  const rows = space ? space.floors[0].rows : 6;
   const multi = logFloorKeys.length > 1;
+  const activeKey = multi ? (activeFloor || logFloorKeys[0]) : logFloorKeys[0];
+  const activeFloorObj = space && activeKey !== undefined ? floorForKey(space, activeKey) : null;
+  const columns = activeFloorObj ? activeFloorObj.columns : 6;
+  const rows = activeFloorObj ? activeFloorObj.rows : 6;
+  setSceneExtent(columns, rows);
   const visible = multi ? activeFloor : null;
   if (space) {
     const explored = stepIndex > 0;
+    const targetFloor = activeFloorObj || space.floors[0];
     for (const floor of space.floors) {
       const key = floor.id || "";
       if (multi && key !== (visible || logFloorKeys[0])) continue;
-      if (!multi && space.floors[0] !== floor) continue;
+      if (!multi && floor !== targetFloor) continue;
       contentGroup.add(buildFloorPlane(floor, explored));
     }
   }
@@ -295,8 +299,6 @@ function startApp(): void {
   if (floorSel) {
     floorSel.addEventListener("change", () => {
       activeFloor = floorSel.value;
-      stepIndex = 0;
-      stopPlay();
       renderAll();
     });
   }
