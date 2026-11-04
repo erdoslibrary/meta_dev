@@ -2,47 +2,376 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>공간 퍼즐 뷰어</title>
 <style>
-  body { background: #E9DCC0; color: #2A2118; font-family: Georgia, "Times New Roman", serif; margin: 0; }
-  #landing { position: fixed; inset: 0; background: #E9DCC0; display: flex; align-items: center; justify-content: center; }
-  #landing .inner { position: relative; text-align: center; max-width: 36em; padding: 2em; }
-  #spell { font-size: 1.4em; margin: 0 0 0.6em; opacity: 0; transition: opacity 800ms ease; }
-  #seal { position: absolute; inset: 0; pointer-events: none; border: 12px solid rgba(160,50,43,0.28); border-radius: 4px; }
-  #ink { width: 320px; height: 80px; }
-  #ink-path { fill: none; stroke: #2A2118; stroke-width: 5; stroke-linecap: round; }
-  #app { display: none; }
-  #map { width: 100%; height: 70vh; }
-  #floors { display: none; }
-  #result .closing { text-align: center; }
-  .seal { color: #A0322B; }
-  .photo-empty { border: 1px dashed #2A2118; min-height: 120px; }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    height: 100%;
+    background: #2A2118;
+    color: #2A2118;
+    font-family: Georgia, "Times New Roman", "Batang", serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  select, button, input {
+    font-family: Georgia, "Times New Roman", "Batang", serif;
+  }
+
+  #landing {
+    position: fixed;
+    inset: 0;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: radial-gradient(ellipse at center, #E9DCC0 0%, #DCCFAC 62%, #b9a67f 100%);
+  }
+  #landing .inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 18px;
+    max-width: 560px;
+    text-align: center;
+  }
+  #seal {
+    width: 116px;
+    height: 116px;
+    border-radius: 50%;
+    border: 6px double #A0322B;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #E9DCC0;
+    box-shadow: 0 2px 0 rgba(42,33,24,.25), inset 0 0 18px rgba(160,50,43,.18);
+    font-size: 15px;
+    letter-spacing: .18em;
+    color: #2A2118;
+  }
+  #seal .seal-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
+  #seal .seal-mark {
+    font-size: 30px;
+    letter-spacing: 0;
+  }
+  #seal .seal-sub {
+    font-size: 10px;
+  }
+  #spell {
+    margin: 0;
+    font-weight: normal;
+    font-size: 32px;
+    line-height: 1.25;
+    letter-spacing: .02em;
+    opacity: 0;
+    transition: opacity 800ms ease;
+  }
+  #ink {
+    width: 320px;
+    height: 80px;
+    overflow: visible;
+  }
+  #ink-path {
+    fill: none;
+    stroke: #2A2118;
+    stroke-width: 2.5;
+    stroke-linecap: round;
+  }
+  #enter {
+    font-size: 17px;
+    letter-spacing: .3em;
+    padding: 12px 34px 12px 40px;
+    background: #2A2118;
+    color: #E9DCC0;
+    border: 1px solid #2A2118;
+    cursor: pointer;
+    box-shadow: inset 0 0 0 3px #2A2118, inset 0 0 0 4px #E9DCC0;
+  }
+  #enter:hover {
+    background: #3d3124;
+  }
+
+  #app {
+    display: none;
+  }
+  .shell {
+    position: fixed;
+    inset: 0;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    background: #2A2118;
+  }
+  .app-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 16px;
+    padding: 10px 16px;
+    background: #E9DCC0;
+    border-bottom: 4px double #2A2118;
+  }
+  .brand {
+    font-size: 15px;
+    letter-spacing: .08em;
+    padding-right: 10px;
+    border-right: 1px solid rgba(42,33,24,.3);
+  }
+  .brand em {
+    font-style: italic;
+  }
+  .ctrl-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+  }
+  label.floor-label:has(#floor[style*="none"]) {
+    display: none;
+  }
+  .ctrl-label select {
+    font-size: 13px;
+    padding: 4px 6px;
+    background: #DCCFAC;
+    color: #2A2118;
+    border: 1px solid #2A2118;
+  }
+  .file-group {
+    display: flex;
+    gap: 6px;
+  }
+  .file-label {
+    font-size: 12px;
+    padding: 4px 9px;
+    border: 1px dashed #2A2118;
+    cursor: pointer;
+  }
+  .file-label:hover {
+    background: #DCCFAC;
+  }
+  .file-label input {
+    display: none;
+  }
+  .header-meta {
+    margin-left: auto;
+    display: flex;
+    gap: 14px;
+    align-items: center;
+    font-size: 12px;
+  }
+  #status {
+    font-style: italic;
+  }
+  #trail-info {
+    padding: 3px 8px;
+    border: 1px solid #2A2118;
+  }
+  #trail-info:empty {
+    display: none;
+  }
+
+  .app-main {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(280px, 340px);
+    min-height: 0;
+  }
+  .map-stage {
+    position: relative;
+    min-height: 0;
+    min-width: 0;
+    overflow: hidden;
+  }
+  #map {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+    cursor: grab;
+    touch-action: none;
+  }
+  .hud-bar {
+    position: absolute;
+    left: 16px;
+    bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px;
+    background: #E9DCC0;
+    border: 3px double #2A2118;
+  }
+  .hud-btn {
+    font-size: 14px;
+    padding: 8px 14px;
+    background: #E9DCC0;
+    color: #2A2118;
+    border: 1px solid #2A2118;
+    cursor: pointer;
+  }
+  .hud-btn:hover {
+    background: #DCCFAC;
+  }
+  #play {
+    min-width: 84px;
+    font-size: 14px;
+    padding: 8px 14px;
+    background: #2A2118;
+    color: #E9DCC0;
+    border: 1px solid #2A2118;
+    cursor: pointer;
+  }
+  #play:hover {
+    background: #3d3124;
+  }
+  .map-hint {
+    position: absolute;
+    right: 14px;
+    bottom: 14px;
+    font-size: 11px;
+    font-style: italic;
+    color: #DCCFAC;
+    opacity: .8;
+    pointer-events: none;
+  }
+
+  .chronicle {
+    background: #DCCFAC;
+    border-left: 4px double #2A2118;
+    overflow: auto;
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .chronicle-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+    border-bottom: 1px solid #2A2118;
+    padding-bottom: 8px;
+  }
+  .chronicle-head h2 {
+    margin: 0;
+    font-weight: normal;
+    font-size: 20px;
+  }
+  #ghost {
+    display: flex;
+    flex-direction: column;
+  }
+  #ghost > div {
+    padding: 7px 6px;
+    border-bottom: 1px dotted rgba(42,33,24,.45);
+    font-size: 13px;
+    line-height: 1.45;
+  }
+  #ghost > div.seal,
+  .seal {
+    color: #A0322B;
+    border: 1px solid #A0322B;
+    background: rgba(160,50,43,.08);
+    padding: 4px 8px;
+    letter-spacing: .05em;
+  }
+  .photo {
+    padding: 8px 6px;
+    border-bottom: 1px dotted rgba(42,33,24,.45);
+  }
+  #ghost img {
+    max-width: 100%;
+    display: block;
+    border: 1px solid #2A2118;
+  }
+  .photo-empty {
+    border: 1px dashed #2A2118;
+    min-height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-style: italic;
+    background: repeating-linear-gradient(135deg, #E9DCC0 0 6px, #DCCFAC 6px 12px);
+  }
+  #result {
+    border: 4px double #2A2118;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    background: #E9DCC0;
+    margin-top: auto;
+    font-size: 13px;
+  }
+  #result .closing {
+    text-align: center;
+    font-style: italic;
+    margin-top: 4px;
+    padding-top: 6px;
+    border-top: 1px dotted rgba(42,33,24,.45);
+  }
 </style>
 </head>
 <body>
-<div id="landing"><div class="inner">
-  <div id="seal"></div>
-  <p id="spell">Don't Panic</p>
-  <svg id="ink" viewBox="0 0 320 80" aria-hidden="true"><path id="ink-path" d="M10,60 C80,10 140,70 200,30 S290,50 310,20"/></svg>
-  <p><button id="enter" type="button">Enter</button></p>
-</div></div>
-<div id="app">
-  <select id="logsel" aria-label="내장 로그 선택"></select>
-  <select id="floor" aria-label="층 선택" style="display:none"></select>
-  <input type="file" id="logfile" accept="application/json">
-  <input type="file" id="puzzlefile" accept="application/json">
-  <div id="status" role="status"></div>
-  <div id="trail-info"></div>
-  <div id="photos"></div>
-  <div id="floors"><span>층:</span></div>
-  <canvas id="map"></canvas>
-  <div>
-    <button id="play" type="button">재생</button>
-    <button id="step" type="button">다음</button>
-    <button id="reset" type="button">처음부터</button>
+<div id="landing">
+  <div class="inner">
+    <div id="seal">
+      <div class="seal-inner">
+        <span class="seal-mark">R·S</span>
+        <span class="seal-sub">ARCHIVE</span>
+      </div>
+    </div>
+    <p id="spell">Don't Panic</p>
+    <svg id="ink" viewBox="0 0 320 80" aria-hidden="true"><path id="ink-path" d="M10,60 C80,10 140,70 200,30 S290,50 310,20"/></svg>
+    <p><button id="enter" type="button">Enter</button></p>
   </div>
-  <div id="ghost"></div>
-  <div id="result"></div>
+</div>
+<div id="app">
+  <div class="shell">
+    <header class="app-header">
+      <div class="brand">Real-to-Sim <em>Archive</em></div>
+      <label class="ctrl-label">기록
+        <select id="logsel" aria-label="내장 로그 선택"></select>
+      </label>
+      <label class="ctrl-label floor-label">층
+        <select id="floor" aria-label="층 선택" style="display:none"></select>
+      </label>
+      <div class="file-group">
+        <label class="file-label">기록 JSON<input type="file" id="logfile" accept="application/json"></label>
+        <label class="file-label">퍼즐 JSON<input type="file" id="puzzlefile" accept="application/json"></label>
+      </div>
+      <div class="header-meta">
+        <div id="status" role="status"></div>
+        <div id="trail-info"></div>
+      </div>
+    </header>
+    <main class="app-main">
+      <section class="map-stage">
+        <canvas id="map"></canvas>
+        <div class="hud-bar">
+          <button id="play" type="button">재생</button>
+          <button id="step" class="hud-btn" type="button">다음</button>
+          <button id="reset" class="hud-btn" type="button">처음부터</button>
+        </div>
+        <div class="map-hint">드래그 회전 · 휠 확대</div>
+      </section>
+      <aside class="chronicle">
+        <div class="chronicle-head">
+          <h2>연대기</h2>
+        </div>
+        <div id="ghost"></div>
+        <div id="result"></div>
+        <div id="photos" style="display:none"></div>
+        <div id="floors" style="display:none"></div>
+      </aside>
+    </main>
+  </div>
 </div>
 <script>var module = { exports: {} }, exports = module.exports;</script>
 <script src="vendor/three.cjs"></script>
