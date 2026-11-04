@@ -2,7 +2,9 @@
 
 let currentLog: RunLog | null = null;
 let currentStatic: { space: SpaceData; puzzle: PuzzleData } | null = null;
-let filePuzzle: PuzzleData | null = null;
+let filePuzzle: FilePuzzleData | null = null;
+let currentReveal: { [puzzleNumber: string]: RevealEntry } | null = null;
+let currentFileLog = false;
 let currentPhotoBase = "";
 let currentNpcNames: { [id: string]: string } = {};
 let logFloorKeys: string[] = [];
@@ -127,6 +129,8 @@ function renderAll(): void {
       space: currentStatic ? currentStatic.space : null,
       puzzle: currentStatic ? currentStatic.puzzle : null,
       filePuzzle,
+      reveals: currentReveal,
+      fileLog: currentFileLog,
       photoBase: currentPhotoBase,
       npcNames: currentNpcNames,
       floor: multi ? (visible || logFloorKeys[0]) : null,
@@ -135,7 +139,7 @@ function renderAll(): void {
   onSceneRebuild(renderAll);
 }
 
-function setLog(log: RunLog, data: RtData | null): void {
+function setLog(log: RunLog, data: RtData | null, logKey: string | null): void {
   const bad = validateLogForPlayback(log);
   if (bad) {
     setStatus("재생 거부: " + bad);
@@ -143,6 +147,16 @@ function setLog(log: RunLog, data: RtData | null): void {
   }
   currentLog = log;
   currentStatic = staticFor(log, data);
+  currentFileLog = (logKey === null);
+  currentReveal = null;
+  if (data && logKey !== null) {
+    const set = data.sets[log.puzzle_set_id];
+    if (set && set.reveals) currentReveal = set.reveals[logKey] ?? null;
+    else {
+      const sample = data.sample_sets[log.puzzle_set_id];
+      if (sample && sample.reveals) currentReveal = sample.reveals[logKey] ?? null;
+    }
+  }
   currentPhotoBase = "";
   currentNpcNames = {};
   if (data) {
@@ -209,16 +223,16 @@ function startPlay(): void {
   }, 500);
 }
 
-function builtinLogEntries(data: RtData): { label: string; log: RunLog }[] {
-  const out: { label: string; log: RunLog }[] = [];
+function builtinLogEntries(data: RtData): { label: string; log: RunLog; key: string }[] {
+  const out: { label: string; log: RunLog; key: string }[] = [];
   for (const setName of Object.keys(data.sets)) {
     const set = data.sets[setName];
     for (const key of Object.keys(set.logs)) {
-      out.push({ label: setName + "/" + key, log: set.logs[key] });
+      out.push({ label: setName + "/" + key, log: set.logs[key], key });
     }
   }
   for (const name of Object.keys(data.testdata)) {
-    out.push({ label: "testdata/" + name, log: data.testdata[name] });
+    out.push({ label: "testdata/" + name, log: data.testdata[name], key: "testdata/" + name });
   }
   return out;
 }
@@ -236,9 +250,9 @@ function fillLogSelect(data: RtData | null): void {
   }
   sel.onchange = () => {
     const idx = parseInt(sel.value, 10);
-    if (!isNaN(idx) && entries[idx]) setLog(entries[idx].log, data);
+    if (!isNaN(idx) && entries[idx]) setLog(entries[idx].log, data, entries[idx].key);
   };
-  if (entries.length > 0) setLog(entries[0].log, data);
+  if (entries.length > 0) setLog(entries[0].log, data, entries[0].key);
 }
 
 function startApp(): void {
@@ -298,7 +312,7 @@ function startApp(): void {
     file.addEventListener("change", () => {
       if (!file.files || file.files.length === 0) return;
       loadLogFile(file.files[0]).then(
-        (log) => setLog(log, builtinData()),
+        (log) => setLog(log, builtinData(), null),
         (err) => setStatus("재생 거부: " + String(err && (err as Error).message || err))
       );
     });

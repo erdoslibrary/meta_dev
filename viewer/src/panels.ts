@@ -6,7 +6,9 @@
 interface PanelOptions {
   space: SpaceData | null;
   puzzle: PuzzleData | null;
-  filePuzzle: PuzzleData | null;
+  filePuzzle: FilePuzzleData | null;
+  reveals: { [puzzleNumber: string]: RevealEntry } | null;
+  fileLog: boolean;
   photoBase: string;
   npcNames: { [id: string]: string };
   floor?: string | null;
@@ -56,13 +58,35 @@ function panelPhoto(
 }
 
 function findEntry(
-  puzzle: PuzzleData | null, n: number
+  puzzle: PuzzleData | FilePuzzleData | null, n: number
 ): PuzzleEntry | null {
   if (!puzzle) return null;
   for (const e of puzzle.puzzles) {
     if (e.number === n) return e;
   }
   return null;
+}
+
+function showFailedAnswer(
+  feed: HTMLElement, n: number, opts: PanelOptions
+): void {
+  if (!opts.fileLog) {
+    const rev = opts.reveals ? opts.reveals[String(n)] : undefined;
+    if (rev && rev.answer) {
+      panelText(feed, "정답: " + rev.answer);
+      if (rev.next_instruction) panelText(feed, "다음: " + rev.next_instruction);
+    } else {
+      panelText(feed, "정답 데이터 없음");
+    }
+    return;
+  }
+  const entry = findEntry(opts.filePuzzle, n) as FilePuzzleEntry | null;
+  if (entry && entry.answer) {
+    panelText(feed, "정답: " + entry.answer);
+    if (entry.next_instruction) panelText(feed, "다음: " + entry.next_instruction);
+  } else {
+    panelText(feed, "정답 데이터 없음");
+  }
 }
 
 function renderPanels(
@@ -114,18 +138,12 @@ function renderPanels(
     } else if (e.type === "puzzle_ended") {
       const pe = e as PuzzleEndedEvent;
       ended.push(pe);
-      panelText(feed, "퍼즐 " + pe.puzzle + " 결과: " + pe.result);
-      if (pe.result === "failed") {
-        const entry = findEntry(staticPuzzle, pe.puzzle);
-        if (entry && entry.answer) {
-          panelText(feed, "정답: " + entry.answer, "seal");
-          if (entry.next_instruction) {
-            panelText(feed, "다음: " + entry.next_instruction);
-          }
-        } else {
-          panelText(feed, "정답 데이터 없음");
-        }
-      }
+      panelText(
+        feed,
+        "퍼즐 " + pe.puzzle + " 결과: " + pe.result,
+        pe.result === "failed" ? "seal" : undefined
+      );
+      if (pe.result === "failed") showFailedAnswer(feed, pe.puzzle, opts);
     }
   }
 

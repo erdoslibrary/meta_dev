@@ -62,15 +62,25 @@ interface SpaceData {
   rooms: SpaceRoom[]; objects: SpaceObject[];
 }
 
-interface PuzzleDialogue { text: string; contains_hint: boolean; }
+interface PuzzleDialogue { text: string; }
 interface PuzzleEntry {
   number: number; object_id: string; npc: string;
   question?: string; dialogue?: PuzzleDialogue[];
   on_wrong: string; on_correct: string;
   image?: { path: string };
-  answer?: string; next_instruction?: string | null;
   answer_letter_count?: number; max_attempts?: number;
 }
+/* File-input original puzzle.json only (decision B): keeps failed-puzzle answer/next_instruction. Embedded PuzzleEntry stays answer-free. */
+interface FilePuzzleEntry extends PuzzleEntry {
+  answer: string; next_instruction: string | null;
+}
+/* File-input original puzzle.json container (decision B). */
+interface FilePuzzleData {
+  puzzle_set_id: string; space_id: string; start_cell: string;
+  start_instruction?: string; puzzles: FilePuzzleEntry[];
+}
+interface RevealEntry { answer: string; next_instruction?: string; }
+type Reveals = { [logKey: string]: { [puzzleNumber: string]: RevealEntry } };
 interface PuzzleData {
   puzzle_set_id: string; space_id: string; start_cell: string;
   start_instruction?: string; puzzles: PuzzleEntry[];
@@ -80,8 +90,9 @@ interface NpcData { id: string; name: string; image: string; }
 interface SetBundle {
   space: SpaceData; puzzle: PuzzleData; npc: NpcData;
   logs: { [key: string]: RunLog };
+  reveals: Reveals;
 }
-interface SampleSetBundle { space?: SpaceData; puzzle?: PuzzleData; npc?: NpcData; }
+interface SampleSetBundle { space?: SpaceData; puzzle?: PuzzleData; npc?: NpcData; reveals: Reveals; }
 interface RtData {
   sets: { [setName: string]: SetBundle };
   testdata: { [name: string]: RunLog };

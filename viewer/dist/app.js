@@ -36,6 +36,48 @@ function loadLogFile(file) {
 function loadPuzzleFile(file) {
     return readJsonFile(file).then((doc) => doc);
 }
+/** Sample-set id linked by viewer/testdata/failed.json (T040/T046). */
+const FAILED_SAMPLE_SET_ID = "viewer-failed";
+/** Sample-set id linked by viewer/testdata/multilayer.json (T041/T047). */
+const MULTILAYER_SAMPLE_SET_ID = "viewer-multilayer";
+/** One sample-set bundle embedded in window.RT_DATA (viewer/testdata/sets/<id>/). */
+function sampleSetFor(data, setId) {
+    if (!data || !data.sample_sets)
+        return null;
+    return data.sample_sets[setId] ?? null;
+}
+/** Space + puzzle of one embedded sample set (both must be present). */
+function sampleStaticFor(data, setId) {
+    const set = sampleSetFor(data, setId);
+    if (set && set.space && set.puzzle) {
+        return { space: set.space, puzzle: set.puzzle };
+    }
+    return null;
+}
+/** T044: static data of the failed.json sample set from built-in RT_DATA. */
+function failedSampleStatic(data) {
+    return sampleStaticFor(data, FAILED_SAMPLE_SET_ID);
+}
+/** T045: static data of the multilayer.json sample set from built-in RT_DATA. */
+function multilayerSampleStatic(data) {
+    return sampleStaticFor(data, MULTILAYER_SAMPLE_SET_ID);
+}
+/** Reveals entry of one embedded sample-set log (keys like "testdata/failed"). */
+function sampleRevealsFor(data, setId, logKey) {
+    const set = sampleSetFor(data, setId);
+    if (set && set.reveals && set.reveals[logKey]) {
+        return set.reveals[logKey];
+    }
+    return null;
+}
+/** T044: reveals of testdata/failed from built-in RT_DATA. */
+function failedSampleReveals(data) {
+    return sampleRevealsFor(data, FAILED_SAMPLE_SET_ID, "testdata/failed");
+}
+/** T045: reveals of testdata/multilayer from built-in RT_DATA. */
+function multilayerSampleReveals(data) {
+    return sampleRevealsFor(data, MULTILAYER_SAMPLE_SET_ID, "testdata/multilayer");
+}
 /* Floor grouping by cell prefix (global script). Prefix-less cells attach
    to the single floor. Group-visibility switching shows only the active
    floor's moves and observations. */
@@ -259,6 +301,8 @@ function validateLogForPlayback(doc) {
 let currentLog = null;
 let currentStatic = null;
 let filePuzzle = null;
+let currentReveal = null;
+let currentFileLog = false;
 let currentPhotoBase = "";
 let currentNpcNames = {};
 let logFloorKeys = [];
@@ -384,6 +428,8 @@ function renderAll() {
             space: currentStatic ? currentStatic.space : null,
             puzzle: currentStatic ? currentStatic.puzzle : null,
             filePuzzle,
+            reveals: currentReveal,
+            fileLog: currentFileLog,
             photoBase: currentPhotoBase,
             npcNames: currentNpcNames,
             floor: multi ? (visible || logFloorKeys[0]) : null,
@@ -391,7 +437,7 @@ function renderAll() {
     }
     onSceneRebuild(renderAll);
 }
-function setLog(log, data) {
+function setLog(log, data, logKey) {
     const bad = validateLogForPlayback(log);
     if (bad) {
         setStatus("재생 거부: " + bad);
@@ -399,6 +445,18 @@ function setLog(log, data) {
     }
     currentLog = log;
     currentStatic = staticFor(log, data);
+    currentFileLog = (logKey === null);
+    currentReveal = null;
+    if (data && logKey !== null) {
+        const set = data.sets[log.puzzle_set_id];
+        if (set && set.reveals)
+            currentReveal = set.reveals[logKey] ?? null;
+        else {
+            const sample = data.sample_sets[log.puzzle_set_id];
+            if (sample && sample.reveals)
+                currentReveal = sample.reveals[logKey] ?? null;
+        }
+    }
     currentPhotoBase = "";
     currentNpcNames = {};
     if (data) {
@@ -472,11 +530,11 @@ function builtinLogEntries(data) {
     for (const setName of Object.keys(data.sets)) {
         const set = data.sets[setName];
         for (const key of Object.keys(set.logs)) {
-            out.push({ label: setName + "/" + key, log: set.logs[key] });
+            out.push({ label: setName + "/" + key, log: set.logs[key], key });
         }
     }
     for (const name of Object.keys(data.testdata)) {
-        out.push({ label: "testdata/" + name, log: data.testdata[name] });
+        out.push({ label: "testdata/" + name, log: data.testdata[name], key: "testdata/" + name });
     }
     return out;
 }
@@ -495,10 +553,10 @@ function fillLogSelect(data) {
     sel.onchange = () => {
         const idx = parseInt(sel.value, 10);
         if (!isNaN(idx) && entries[idx])
-            setLog(entries[idx].log, data);
+            setLog(entries[idx].log, data, entries[idx].key);
     };
     if (entries.length > 0)
-        setLog(entries[0].log, data);
+        setLog(entries[0].log, data, entries[0].key);
 }
 function startApp() {
     const canvas = document.getElementById("map");
@@ -561,7 +619,7 @@ function startApp() {
         file.addEventListener("change", () => {
             if (!file.files || file.files.length === 0)
                 return;
-            loadLogFile(file.files[0]).then((log) => setLog(log, builtinData()), (err) => setStatus("재생 거부: " + String(err && err.message || err)));
+            loadLogFile(file.files[0]).then((log) => setLog(log, builtinData(), null), (err) => setStatus("재생 거부: " + String(err && err.message || err)));
         });
     }
     onSceneRebuild(renderAll);
@@ -653,6 +711,29 @@ function findEntry(puzzle, n) {
     }
     return null;
 }
+function showFailedAnswer(feed, n, opts) {
+    if (!opts.fileLog) {
+        const rev = opts.reveals ? opts.reveals[String(n)] : undefined;
+        if (rev && rev.answer) {
+            panelText(feed, "정답: " + rev.answer);
+            if (rev.next_instruction)
+                panelText(feed, "다음: " + rev.next_instruction);
+        }
+        else {
+            panelText(feed, "정답 데이터 없음");
+        }
+        return;
+    }
+    const entry = findEntry(opts.filePuzzle, n);
+    if (entry && entry.answer) {
+        panelText(feed, "정답: " + entry.answer);
+        if (entry.next_instruction)
+            panelText(feed, "다음: " + entry.next_instruction);
+    }
+    else {
+        panelText(feed, "정답 데이터 없음");
+    }
+}
 function renderPanels(feed, resultBox, log, upto, opts) {
     feed.textContent = "";
     resultBox.textContent = "";
@@ -702,19 +783,9 @@ function renderPanels(feed, resultBox, log, upto, opts) {
         else if (e.type === "puzzle_ended") {
             const pe = e;
             ended.push(pe);
-            panelText(feed, "퍼즐 " + pe.puzzle + " 결과: " + pe.result);
-            if (pe.result === "failed") {
-                const entry = findEntry(staticPuzzle, pe.puzzle);
-                if (entry && entry.answer) {
-                    panelText(feed, "정답: " + entry.answer, "seal");
-                    if (entry.next_instruction) {
-                        panelText(feed, "다음: " + entry.next_instruction);
-                    }
-                }
-                else {
-                    panelText(feed, "정답 데이터 없음");
-                }
-            }
+            panelText(feed, "퍼즐 " + pe.puzzle + " 결과: " + pe.result, pe.result === "failed" ? "seal" : undefined);
+            if (pe.result === "failed")
+                showFailedAnswer(feed, pe.puzzle, opts);
         }
     }
     for (const pe of ended) {
