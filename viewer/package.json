@@ -1,12 +1,9 @@
 {
-  "name": "map-ghost-viewer",
+  "name": "realtosim-viewer",
   "private": true,
-  "version": "0.1.0",
-  "dependencies": {
-    "three": "0.185.0"
-  },
   "devDependencies": {
-    "typescript": "5.9.3",
-    "@types/three": "0.185.0"
+    "@types/three": "0.185.0",
+    "three": "0.185.0",
+    "typescript": "5.9.3"
   }
 }
