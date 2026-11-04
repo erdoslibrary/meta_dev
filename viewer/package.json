@@ -1,0 +1,9 @@
+{
+  "name": "realtosim-viewer",
+  "private": true,
+  "devDependencies": {
+    "@types/three": "0.185.0",
+    "three": "0.185.0",
+    "typescript": "5.9.3"
+  }
+}

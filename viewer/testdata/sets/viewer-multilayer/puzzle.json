@@ -1,0 +1,30 @@
+{
+  "puzzle_set_id": "viewer-multilayer",
+  "space_id": "viewer-multilayer-space",
+  "start_cell": "1F-A1",
+  "puzzles": [
+    {
+      "number": 1,
+      "object_id": "signboard@2F-B2",
+      "npc": "drunkard",
+      "question": "2층 안내판의 빨간 첫 글자만 순서대로 읽으면?",
+      "dialogue": [
+        { "text": "2층까지 올라오다니 대단하구먼.", "contains_hint": false },
+        { "text": "빨간 글자만 따라 읽어 보게나.", "contains_hint": true }
+      ],
+      "image": {
+        "path": "puzzles/bottle_quiz.jpg",
+        "sha256": "c0922cc1f6fe33c8686c4970948f65337931efc8446a9f6657a2d1eb3d595c41"
+      },
+      "answer": "spiral",
+      "answer_letter_count": 6,
+      "hints": [
+        { "level": 1, "after_wrong": 2, "text": "한 병의 끝 글자가 다음 병의 첫 글자다." }
+      ],
+      "next_instruction": null,
+      "next_object_id": null,
+      "on_wrong": "틀렸구먼! 다시 올라오게나.",
+      "on_correct": "허허, 2층까지 정복했구먼."
+    }
+  ]
+}

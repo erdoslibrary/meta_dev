@@ -1,12 +1,3 @@
-<!-- Sync Impact Report
-- Version change: 1.0.0 → 1.1.0 (MINOR: 원칙 확장 + 원칙 1개 추가)
-- Modified principles: I. 테스트 게이트 → I. 테스트 게이트 (TDD Red-Green 명시화로 확장)
-- Added sections: IV. Spec-Driven Development 워크플로우 (4단계 루프, SSOT, tasks 범위 대조)
-- Removed sections: (none)
-- Deferred TODOs: (none). TRD §11 미결 TODO는 계속 미결 유지, 본 헌법에서 결정하지 않음.
-- Note: this report is temporary review material; remove before commit.
--->
-
 # Real-to-Sim 공간 퍼즐 스튜디오 Constitution
 
 ## Core Principles
@@ -21,12 +12,14 @@
 
 ### II. 기술 스택 고정
 
-- Python `realtosim` 패키지로만 구현; 저장소 루트에서 `from realtosim import ...`, `python -m realtosim.<모듈>` MUST.
-- 의존성은 `requirements.txt`의 `jsonschema` 외 추가 MUST NOT (TRD §10).
+- 갈래 1은 Python `realtosim` 패키지로만 구현; 저장소 루트에서 `from realtosim import ...`, `python -m realtosim.<모듈>` MUST.
+- Python 의존성은 `requirements.txt`의 `jsonschema` 외 추가 MUST NOT (TRD §10).
+- 갈래 2 뷰어는 TS + three.js로 구현하고 `tsc` 단일 출력만 쓴다. 허용 패키지는 `three`(벤더 파일 동봉)와 개발 전용 `typescript`·`@types/three`뿐이며, 모두 정확한 버전으로 고정 MUST. 번들러·CDN·외부 URL 사용 MUST NOT.
+- 뷰어는 로컬 서버 없이 `file://`로 연 페이지에서 동작 MUST. ES 모듈 스크립트·importmap, `fetch`·XHR 로컬 파일 읽기, 로컬 사진의 WebGL 텍스처 사용에 의존 MUST NOT. 구체 로딩 방식은 002 plan에서 정한다.
 - Muse Spark 호출은 `realtosim/model_api.py`에서 `httpx`로만; 모델명·키는 환경 변수(`MODEL_API_*`, `SAM_MODEL`)로만 MUST.
 - 데이터·로그·보고서는 파일로만(`data/<set>/`, `logs/<set>/`, `reports/<set>/`); 별도 서버 MUST NOT (PRD AS-5).
 - 계약 기준은 스키마 `docs/schemas/*.schema.json`와 TRD §3~§6; 엔진은 순수 상태 머신(모델·파일·네트워크·무작위성 없음) MUST.
-- TRD §11 미결 사항(뷰어/프론트 스택, SAM 경로, 가구 크기, 주문 연출, 사람 플레이, 마감·제출물)은 본 헌법에서 결정 MUST NOT.
+- TRD §11 미결 사항(뷰어 배포 방식, SAM 경로, 가구 크기, 주문 연출, 사람 플레이, 마감·제출물)은 본 헌법에서 결정 MUST NOT.
 
 ### III. 보안 및 비밀 관리
 
@@ -47,6 +40,6 @@
 - 본 헌법의 금지 조항이 다른 관행보다 우선한다. 그 외 충돌 시 PRD(WHAT/WHY) > TRD §3~§10(HOW) > 스키마 예시 순으로 따른다.
 - 개정은 본 파일 수정 + 버전 증가 + 날짜 갱신으로만 한다. 개정 제안은 이유와 영향 범위를 함께 기록한다.
 - 버전 규칙: MAJOR는 원칙 삭제·재정의 등 호환 불가 변경, MINOR은 원칙·섹션 추가나 실질 확장, PATCH는 문구·오탈자 등 비의미 정정.
-- 모든 변경은 준수 확인을 거친다: 테스트 게이트 통과, 신규 의존성 없음, 비밀·노출 금지 필드 없음.
+- 모든 변경은 준수 확인을 거친다: 테스트 게이트 통과, 원칙 II 허용 목록 외 신규 의존성 없음, 비밀·노출 금지 필드 없음.
 
-**Version**: 1.1.0 | **Ratified**: 2026-11-03 | **Last Amended**: 2026-11-03
+**Version**: 1.2.0 | **Ratified**: 2026-11-03 | **Last Amended**: 2026-11-04

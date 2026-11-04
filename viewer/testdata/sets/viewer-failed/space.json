@@ -1,0 +1,32 @@
+{
+  "space_id": "viewer-failed-space",
+  "floors": [
+    {
+      "id": "1F",
+      "walls": [
+        { "from": { "x": 0, "y": 600 }, "to": { "x": 600, "y": 600 } },
+        { "from": { "x": 600, "y": 600 }, "to": { "x": 600, "y": 0 } },
+        { "from": { "x": 600, "y": 0 }, "to": { "x": 0, "y": 0 } },
+        { "from": { "x": 0, "y": 600 }, "to": { "x": 0, "y": 0 } }
+      ],
+      "doors": [
+        { "id": "door-1", "from": { "x": 100, "y": 600 }, "to": { "x": 190, "y": 600 } }
+      ],
+      "meters_per_pixel": 0.01,
+      "origin_px": { "x": 0, "y": 600 },
+      "columns": 6,
+      "rows": 6
+    }
+  ],
+  "rooms": [{ "name": "1층 휴게실 앞", "cells": "A1:F6" }],
+  "objects": [
+    {
+      "id": "signboard@C4",
+      "label": "분리배출 안내판",
+      "cells": "C4",
+      "description": "벽면에 붙어 있는 분리배출 안내판.",
+      "photos": ["signboard.jpg"],
+      "state": "open"
+    }
+  ]
+}

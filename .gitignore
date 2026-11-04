@@ -39,3 +39,7 @@ cache/
 .DS_Store
 Thumbs.db
 
+# Viewer (symlinks; no trailing slash or symlinks are not excluded)
+node_modules
+.shots
+

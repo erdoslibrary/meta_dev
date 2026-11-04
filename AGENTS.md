@@ -1,17 +1,18 @@
 # AGENTS.md — Real-to-Sim 공간 퍼즐 스튜디오
 
-## 읽을 문서 (위에서 아래 순으로 우선)
+## 읽을 문서 (헌법 금지 조항 우선. 그 외 충돌은 PRD > TRD §3~§10 > 스키마 순. 범위 입력은 `requirement.md`)
 
 - `docs/PRD.md` — WHAT/WHY, 제품 기준.
 - `docs/TRD.md` §3~§10 — HOW, 동작 계약 기준.
 - `docs/schemas/*.schema.json` — 데이터 형식 기준.
 - `requirement.md` — speckit-specify 입력.
-- `.specify/memory/constitution.md` (v1.0.0) — 테스트·스택·보안 원칙.
-- TRD §11 미결 사항은 결정하지 않는다.
+- `.specify/memory/constitution.md` (v1.2.0) — 테스트·스택·보안 원칙.
+- `specs/002-map-ghost-viewer/implementation-notes.md` — 002 plan과 구현 세션 시작 시 읽는다. 시험 근거, 빌드 후보, 시작 지시문. 위 문서와 다르면 위 문서가 우선한다.
+- TRD §11 미결 사항은 결정하지 않는다. 예외: 문서가 plan에 위임한 배포 방식(TRD §9·§11, spec FR-007)과 주문·잉크 수용 시나리오(TRD §9, spec FR-006)는 002 plan에서 정한다. 주문 주체와 화면 범위는 PRD OPEN-4 결정(2026-11-04: 실행자 본인이 외우는 듯한 연출, 진입 전 랜딩 화면)으로 확정됐다. (2026-11-04 변경 사유: PRD OPEN-4 결정 반영. OPEN-4 반영에 한해 docs/TRD.md는 수정하지 않는다.)
 
 ## 디렉토리 규약
 
-- 구현: `realtosim/` 패키지 (`python -m realtosim.<모듈>`).
+- 구현: 갈래 1은 `realtosim/` 패키지 (`python -m realtosim.<모듈>`). 갈래 2 뷰어는 `realtosim/` 밖 별도 폴더에 두고, 이름은 002 plan에서 확정한다.
 - 데이터·로그·보고서: `data/<set>/`, `logs/<set>/`, `reports/<set>/`. 별도 서버 없음.
 - 테스트: `tests/`.
 
@@ -29,7 +30,7 @@
 
 ## 금지 사항
 
-- `jsonschema` 외 새 패키지 추가 금지.
+- 헌법 원칙 II 허용 목록 외 새 패키지 추가 금지. Python은 `jsonschema`만(`model_api`의 `httpx`는 `requirements.txt` 밖 지연 import), 뷰어는 `three`, `typescript`, `@types/three`만 정확한 버전으로 허용한다.
 - 스키마 수정 금지. docs는 변경 사유를 함께 기록할 때만 허용.
 - API 키 등 비밀을 코드·로그·보고서에 기록 금지.
 - 커밋 금지.

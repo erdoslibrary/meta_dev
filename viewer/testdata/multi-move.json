@@ -1,0 +1,18 @@
+{
+  "run_id": "r94",
+  "persona": { "age": 35, "job": "학생", "vocab": "중", "thinking": "말장난을 먼저 떠올림" },
+  "puzzle_set_id": "drunkard-set",
+  "model": "muse-spark-1.3",
+  "events": [
+    { "t": 1, "puzzle": 1, "type": "move", "value": "A1" },
+    { "t": 2, "puzzle": 1, "type": "move", "value": "B2" },
+    { "t": 3, "puzzle": 1, "type": "move", "value": "B3" },
+    { "t": 4, "puzzle": 1, "type": "move", "value": "C3" },
+    { "t": 5, "puzzle": 1, "type": "move", "value": "C4" },
+    { "t": 6, "puzzle": 1, "type": "view", "value": "signboard@C4" },
+    { "t": 7, "puzzle": 1, "type": "npc_dialogue", "npc": "drunkard" },
+    { "t": 8, "puzzle": 1, "type": "answer_submitted", "value": "spiral", "attempt": 1, "correct": true, "reason": "oracle: known answer" },
+    { "t": 9, "puzzle": 1, "type": "puzzle_ended", "result": "solved_by_dialogue", "attempts_used": 1 },
+    { "t": 10, "puzzle": 1, "type": "end", "outcome": "completed" }
+  ]
+}

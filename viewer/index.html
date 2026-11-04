@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>공간 퍼즐 뷰어</title>
+<style>
+  body { background: #E9DCC0; color: #2A2118; font-family: Georgia, "Times New Roman", serif; margin: 0; }
+  #landing { position: fixed; inset: 0; background: #E9DCC0; display: flex; align-items: center; justify-content: center; }
+  #landing .inner { position: relative; text-align: center; max-width: 36em; padding: 2em; }
+  #spell { font-size: 1.4em; margin: 0 0 0.6em; opacity: 0; transition: opacity 800ms ease; }
+  #seal { position: absolute; inset: 0; pointer-events: none; border: 12px solid rgba(160,50,43,0.28); border-radius: 4px; }
+  #ink { width: 320px; height: 80px; }
+  #ink-path { fill: none; stroke: #2A2118; stroke-width: 5; stroke-linecap: round; }
+  #app { display: none; }
+  #map { width: 100%; height: 70vh; }
+  #floors { display: none; }
+  #result .closing { text-align: center; }
+  .seal { color: #A0322B; }
+  .photo-empty { border: 1px dashed #2A2118; min-height: 120px; }
+</style>
+</head>
+<body>
+<div id="landing"><div class="inner">
+  <div id="seal"></div>
+  <p id="spell">Don't Panic</p>
+  <svg id="ink" viewBox="0 0 320 80" aria-hidden="true"><path id="ink-path" d="M10,60 C80,10 140,70 200,30 S290,50 310,20"/></svg>
+  <p><button id="enter" type="button">Enter</button></p>
+</div></div>
+<div id="app">
+  <select id="logsel" aria-label="내장 로그 선택"></select>
+  <select id="floor" aria-label="층 선택" style="display:none"></select>
+  <input type="file" id="logfile" accept="application/json">
+  <input type="file" id="puzzlefile" accept="application/json">
+  <div id="status" role="status"></div>
+  <div id="trail-info"></div>
+  <div id="photos"></div>
+  <div id="floors"><span>층:</span></div>
+  <canvas id="map"></canvas>
+  <div>
+    <button id="play" type="button">재생</button>
+    <button id="step" type="button">다음</button>
+    <button id="reset" type="button">처음부터</button>
+  </div>
+  <div id="ghost"></div>
+  <div id="result"></div>
+</div>
+<script>var module = { exports: {} }, exports = module.exports;</script>
+<script src="vendor/three.cjs"></script>
+<script>window.THREE = module.exports;</script>
+<script src="dist/data.js"></script>
+<script src="dist/app.js"></script>
+</body>
+</html>
