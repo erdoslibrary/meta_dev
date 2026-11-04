@@ -121,7 +121,7 @@
 - OPEN-1 [NEEDS CLARIFICATION]: 퍼즐 최종 선정 목록. 기준은 정해졌으나 목록 미확정.
 - OPEN-2 [NEEDS CLARIFICATION]: 마감 정확한 시각과 제출물(데모 영상, 배포, README 범위).
 - OPEN-3 [NEEDS CLARIFICATION]: 가구 크기 추정 방식(SAM 박스 비율 vs Muse 추정).
-- OPEN-4 [NEEDS CLARIFICATION]: 주문 연출 주체와 화면 범위. 포함 자체는 필수(동영상용)로 확정, 주체·범위는 미결.
+- OPEN-4 해결(2026-11-04): 주문 주체 = 프로그램을 실행하는 실행자 본인이 외우는 것처럼 보임(극 중 시전 인물 없음). 화면 범위 = 진입 전 랜딩 인트로 화면(별도 화면). 포함 필수(동영상용) 유지.
 - OPEN-5 해결: three.js + TS. 지도 렌더링 three.js 평면.
 
 ## 12. 저작권과 출처 고지

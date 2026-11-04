@@ -100,7 +100,7 @@
 - Unexplored rooms blurred and desaturated. Explored rooms sharp.
 - System serif typeface. No webfonts (offline demo priority).
 - Trails drawn with SVG stroke-dashoffset ink effect. No libraries.
-- Order scene (draft): red subtitle with edge vignette, no separate screen. Subject and screen scope stay open (PRD OPEN-4, TRD §11).
+- Order scene: separate landing intro screen before entering the program. The order is framed as if cast by the person running the program. No in-fiction caster. Red subtitle with edge vignette on the landing screen. 변경 사유(2026-11-04): 사용자 결정으로 주체·범위 확정. 기존 draft(별도 화면 없음·미결)를 교체. PRD OPEN-4 해소.
 
 ## Three.js Beginner Notes
 
