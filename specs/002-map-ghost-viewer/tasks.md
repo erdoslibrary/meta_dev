@@ -16,6 +16,11 @@
 **변경 사유 (2026-11-04)**: 결정 E 반영. T007 puzzle 타입에서 `answer`·`next_instruction`을 빼고 `reveals` 타입(퍼즐 번호 문자열 키, `next_instruction` null 생략)을 넣는다.
 **변경 사유 (2026-11-04)**: 결정 B 파일 입력 경로 누락 보완. T007에 파일 입력 원본 `puzzle.json`용 타입(`FilePuzzleEntry`, 실패 퍼즐 `answer`·`next_instruction` 포함, `next_instruction` null 허용)을 내장 payload용 `PuzzleEntry`(정답 없음)와 구분해 둔다.
 **변경 사유 (2026-11-04)**: T018 완료 반영. `ghost.ts` 재생 상태 모델 계약 맞춤(end 필드, 퍼즐 번호, 전환 초기화, seek) 후 `tsc --noEmit` 0·`app.js` 빌드·`unittest` 83 통과 확인.
+**변경 사유 (2026-11-04)**: T020 완료 반영. `main.ts` Ghost 단일 원천 교체(거부 초기화·소진 기준 정지·층 보존) 후 `tsc --noEmit` 0·`unittest` 83 통과·화면 4종 확인.
+**변경 사유 (2026-11-05)**: T029 완료 반영. `.venv/bin/python viewer/tools/embed.py`로 `viewer/dist/data.js` 재생성 후 `viewer/node_modules/.bin/tsc -p viewer`로 `viewer/dist/app.js` 빌드(exit 0, 36,637바이트, 첫 줄 `"use strict";`)하고 Playwright MCP에서 콘솔 확인(앱 코드 메시지 0건. 경고 5건은 헤드리스 SwiftShader의 `CONTEXT_LOST_WEBGL`·`GPU stall due to ReadPixels`로 앱 원인 아님. 이후 재실행에서는 0건).
+**변경 사유 (2026-11-05)**: T032 완료 반영. `viewer/dist/data.js`에서 `next_object_id`·`sha256`·`reason`·`"hints"` 0건, `panels.ts`·`main.ts` DOM 삽입점 전수 감사 및 `reveals` 노출 규칙(`failed` 직후 1회·`solved_*` 무표시·`null` 무문구·파일 경로 양쪽 선택 시만) 코드 대조, `testdata/failed` 화면 증거 fullPage 촬영. 위반 0건.
+**변경 사유 (2026-11-05)**: T031 완료 반영. V-1(빌드·콘솔 0건)·V-2(내장 6종 발자국·거부 2종·파일 r02, fullPage 4장)·V-3(oracle 완주·피드 대조·파일 로그만/로그+퍼즐, fullPage 3장)·V-4(1F 3점·2F 1점·위치 유지·단층 UI 숨김, fullPage 3장)·V-5(랜딩 3요소·연출 `INTRO_MS` 2600ms·진입 버튼·api-error 완주 아님·배포 묶음, fullPage 2장) 전 항목 PASS 및 V-6 `unittest` 83 통과. V-5 랜딩 증거는 영어 전용 전환 뒤 재촬영한 `.shots/t031-v5-landing-v3.png`·`.shots/t031-v5-entered-v3.png`로 대체한다.
+**변경 사유 (2026-11-05)**: 사용자 결정 3건 반영. (1) 로그는 추가 실행 없이 5회로 확정(`requirement.md` 결정 줄). (2) 랜딩 화면 영어 전용 — `viewer/index.html`의 여는 주문 `Don't Panic`, 진입 버튼 `Enter`, 부제 요소 삭제(PRD OPEN-4 보완, spec FR-009 예외). (3) 닫는 주문은 별도 화면 없이 `end(completed)` 결과 박스 꼬리말로 표시 — `viewer/src/panels.ts`가 `완주` 줄을 유지하고 그 아래 `So long, and thanks for all the fish`를 `closing` 클래스로 덧붙인다(PRD OPEN-4 보완, spec FR-006, contracts Rendering Contract).
 
 ## Format: `[ID] [P?] [Story] Description`
 
@@ -72,7 +77,7 @@
 - [X] T039 [P] [US1] Create `viewer/testdata/multi-move.json` as a `log.schema.json`-passing multi-move sample (kept out of `logs/<set>/`, FR-008)
 - [X] T013 [US1] Create `viewer/src/plane.ts` rendering floors from `space.json` as `PlaneGeometry` on the `columns`×`rows` grid (1 cell = 1m, `cellRef` pattern, `2F-C4`-style prefixes, prefix-less cells attach to the single floor, `walls`/`doors`/`origin_px`/`meters_per_pixel`); unexplored rooms blurred/desaturated, explored rooms sharp
 - [X] T014 [US1] Create `viewer/src/trail.ts` drawing trajectory as `Line` plus footprints as `Points` with point count = `move` count + 1 (`start_cell` first), 끊김·실패 segments (`puzzle_ended(failed)`, `end(action_limit)`, `end(api_error)`) in Seal Red `#A0322B` (landing screen excepted); `puzzle_ended` results marked on the trajectory (FR-004)
-- [ ] T015 [US1] Extend `viewer/src/main.ts` with US1 wiring loading built-in `RT_DATA` or a file-input log and driving `plane.ts` + `trail.ts` in `t` order with 끊김-stop display
+- [X] T015 [US1] Extend `viewer/src/main.ts` with US1 wiring loading built-in `RT_DATA` or a file-input log and driving `plane.ts` + `trail.ts` in `t` order with 끊김-stop display
 - [X] T016 [US1] Extend `viewer/index.html` with US1 playback controls and missing-photo empty-frame slots (trajectory/dialogue keep playing when photos are absent)
 
 **Checkpoint**: US1 fully functional and testable independently (V-2: both embedded-sample and file-input paths, 끊김·실패 display; refusal and missing-photo cases per quickstart). Phase checkpoints run V-1 rebuild plus V-2, V-3, V-4 each time (applicable scope).
@@ -91,7 +96,7 @@
 - [X] T044 [US2] Wire `viewer/src/dataload.ts` to use the `failed.json` sample-set static data embedded in `window.RT_DATA` (근거: main.ts staticFor·setLog가 내장 sample_sets에서 정적 데이터·reveals를 읽음)
 - [X] T018 [US2] Create `viewer/src/ghost.ts` implementing ordered playback state (current `t`, puzzle number, cell, opened-object set, submission result, end result) over start → `move` → `view` → `npc_dialogue` → `answer_submitted` → (`hint_revealed` | `puzzle_ended`) → next puzzle or `end`
 - [X] T019 [US2] Create `viewer/src/panels.ts` showing at each `view` point the object photo (`<img>`) and `npc_dialogue`, per-puzzle `puzzle_ended.result`, `on_wrong` in order and `on_correct` right after a correct submission (next place and answer strings in the line shown verbatim), `answer_submitted.value` as submitted verbatim, `hint_revealed` level only (no hint body), and the matching `reveals` entry (`{answer, next_instruction}` read from the linked set's `reveals`) exactly once right after `puzzle_ended(failed)` (`null` shows no next-place phrase; solved puzzles show no `next_instruction`, their next place comes via `on_correct`); file-input `failed` answers and `next_instruction` only when the log and `puzzle.json` are both selected, else "정답 데이터 없음" only with no next-place phrase; never showing `next_object_id` (full ban), photo paths/hashes, unreleased hints, `reason`, or answers of non-`failed` puzzles (FR-005, decision A/B); Seal Red goes on the `퍼즐 N 결과: failed` line, the `정답: …` line stays default ink
-- [ ] T020 [US2] Extend `viewer/src/main.ts` with US2 ghost wiring driving `ghost.ts` + `panels.ts` over the US1 trajectory
+- [X] T020 [US2] Extend `viewer/src/main.ts` with US2 ghost wiring driving `ghost.ts` + `panels.ts` over the US1 trajectory
 - [X] T021 [US2] Extend `viewer/index.html` with US2 ghost controls (log + `puzzle.json` file selectors, decision B) and result display regions
 
 **Checkpoint**: US1 AND US2 both work independently (V-3: oracle uninterrupted, `failed` answer (`puzzle.json` `answer` field) shown once with `next_instruction` (`null` shows nothing), non-`failed` answers absent from screen and outputs; `on_correct` after correct submission and `answer_submitted.value` allowed; file-input rule per quickstart). Phase checkpoints run V-1 rebuild plus V-2, V-3, V-4 each time (applicable scope).
@@ -125,7 +130,7 @@
 - [X] T026 Create `viewer/src/order.ts` rendering the pre-entry landing intro (spell text + red seal overlay + SVG `stroke-dashoffset` ink trail, executor-self framing, no in-fiction caster) playing without stutter within 5 seconds
 - [X] T027 Extend `viewer/src/main.ts` with landing-to-program entry wiring (button vs auto decided at slice start)
 - [X] T028 Extend `viewer/index.html` with the landing intro screen (red subtitle + edge vignette) placed before program entry
-- [ ] T029 Regenerate `viewer/dist/data.js` via `.venv/bin/python viewer/tools/embed.py` and build `viewer/dist/app.js` via `viewer/node_modules/.bin/tsc -p viewer` only, then verify console error/warning-free at `file://$PWD/viewer/index.html`; deploy set is `index.html` + `dist/app.js` + `dist/data.js` + `vendor/three.cjs` + `data/<set>/` photos with `node_modules`/`.shots` excluded (Muse does not commit; a human commits)
+- [X] T029 Regenerate `viewer/dist/data.js` via `.venv/bin/python viewer/tools/embed.py` and build `viewer/dist/app.js` via `viewer/node_modules/.bin/tsc -p viewer` only, then verify console error/warning-free at `file://$PWD/viewer/index.html`; deploy set is `index.html` + `dist/app.js` + `dist/data.js` + `vendor/three.cjs` + `data/<set>/` photos with `node_modules`/`.shots` excluded (Muse does not commit; a human commits)
 
 **Checkpoint**: Order/ink + offline deploy verified (V-5).
 
@@ -136,8 +141,8 @@
 **Purpose**: 언어·노출 감사·전체 회귀. 영어 전체 번역은 시간 여유 시 별도 작업 (FR-009, Out of Scope).
 
 - [X] T030 Polish Korean copy in `viewer/index.html` and `viewer/src/*.ts` strings (default language Korean; no webfonts)
-- [ ] T032 Audit exposure compliance in viewer screens and outputs including `viewer/dist/data.js`: photo paths banned on screen, hashes (`sha256`) banned in artifacts; `failed` answers (`puzzle.json` `answer` field) appear only once right after `puzzle_ended(failed)` together with that puzzle's `next_instruction` (`null` shows no next-place phrase; solved puzzles show none, next place via `on_correct`) (exception per decision A: `on_correct` right after correct submission and `answer_submitted.value` display allowed, `reason` excluded from display and `data.js`); no `next_object_id` (full ban), unreleased hints, hint bodies, or non-`failed` puzzle answers (FR-005, data-model Display Exposure)
-- [ ] T031 Run quickstart validation V-1 through V-5 via Playwright MCP only (console collection → real-UI operation → before/after screenshots in `.shots/` opened with `read_file` → PASS/FAIL per item) plus V-6 regression gate `.venv/bin/python -m unittest discover tests -v` (never bare `python`/`python3`)
+- [X] T032 Audit exposure compliance in viewer screens and outputs including `viewer/dist/data.js`: photo paths banned on screen, hashes (`sha256`) banned in artifacts; `failed` answers (`puzzle.json` `answer` field) appear only once right after `puzzle_ended(failed)` together with that puzzle's `next_instruction` (`null` shows no next-place phrase; solved puzzles show none, next place via `on_correct`) (exception per decision A: `on_correct` right after correct submission and `answer_submitted.value` display allowed, `reason` excluded from display and `data.js`); no `next_object_id` (full ban), unreleased hints, hint bodies, or non-`failed` puzzle answers (FR-005, data-model Display Exposure)
+- [X] T031 Run quickstart validation V-1 through V-5 via Playwright MCP only (console collection → real-UI operation → before/after screenshots in `.shots/` opened with `read_file` → PASS/FAIL per item) plus V-6 regression gate `.venv/bin/python -m unittest discover tests -v` (never bare `python`/`python3`)
 
 ---
 

@@ -8,6 +8,7 @@
 **변경 사유 (2026-11-04)**: 재생 거부 표본은 결함 유지·`data.js` 규칙 동일 적용으로 고치고(차단 3), 표본 구조를 바로 아래 `*.json`·`refusal/`·`sets/<puzzle_set_id>/`로 정한다(차단 4).
 **변경 사유 (2026-11-04)**: 지시 1~15 문서 수정 반영. 세트 탐색 규칙(sets→data, 중복·없음이면 미생성), 허용 필드(퍼즐 7종·대화문 text만, contains_hint 제외), Seal Red 결과 줄 한정을 명시한다.
 **변경 사유 (2026-11-04)**: 결정 E 페이로드 분리를 반영. 세트 공용 `puzzle`에는 `answer`·`next_instruction`을 넣지 않고, 로그별 정답은 `reveals/<로그 키>`에 그 로그에서 `failed`인 퍼즐만 둔다(`next_instruction`이 `null`이면 생략). `sets/<id>/reveals`와 `sample_sets/<id>/reveals` 모두 같은 규칙을 따른다.
+**변경 사유 (2026-11-05)**: PRD OPEN-4 보완 반영. Rendering Contract에 주문 문구 배치(랜딩 영어 전용·닫는 주문 결과 박스 꼬리말)를 추가한다.
 **변경 사유 (2026-11-04)**: 결정 E 키 규칙을 통일. 정답은 로그가 연결된 세트(세트 조회 결과 `sets/<id>` 또는 `sample_sets/<id>`)의 `reveals`에 둔다. 키는 실로그 상대 경로(`r01`, `oracle/r0`)·표본 로그 `testdata/<이름>`·재생 거부 표본 `refusal/<이름>`, 퍼즐 번호 키는 문자열(`"1"`)이다.
 
 ## Input Contract (읽기 전용, 형식 변경 없음)
@@ -44,6 +45,7 @@
 - `requestAnimationFrame` 반복 렌더. 1회성 `render()` 페이지는 쓰지 않는다.
 - `webglcontextlost`에서 `preventDefault()` 호출, `webglcontextrestored`에서 장면 재구성.
 - 평면 = `PlaneGeometry`, 지도 궤적 = `Line`, 발자국 = `Points`, 층 = 그룹 표시 전환.
+- 주문 문구: 여는 주문은 랜딩 화면에만, 닫는 주문은 `end(completed)` 결과 박스 꼬리말 한 줄에만 둔다. 완주 표시(`완주`)는 유지하고 그 아래에 덧붙인다. 끊김·실패 로그에는 닫는 주문을 쓰지 않는다. 랜딩 화면은 영어 전용이다.
 - 색·서체: Base `#E9DCC0`–`#DCCFAC`, Ink `#2A2118`, Seal Red `#A0322B`(끊김·실패 구간만 — `puzzle_ended(failed)`·`end(action_limit)`·`end(api_error)`, 랜딩 화면 예외; 실패 시 붉은색은 `퍼즐 N 결과: failed` 줄에 쓰고 `정답: …` 문구는 기본 먹색으로 표시), 시스템 세리프, 웹폰트 없음. SVG `stroke-dashoffset` 잉크 효과는 랜딩 화면에만 쓴다. 미탐험 흐림·탐험 선명.
 
 ## Display Exposure Contract (FR-005, 결정 A/B)

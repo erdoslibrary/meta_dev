@@ -157,5 +157,8 @@ function renderPanels(
       resultBox,
       outcome === "completed" ? "완주" : "끊김(" + outcome + "): 완주 아님"
     );
+    if (outcome === "completed") {
+      panelText(resultBox, "So long, and thanks for all the fish", "closing");
+    }
   }
 }

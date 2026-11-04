@@ -47,6 +47,7 @@ Real-to-Sim 공간 퍼즐 스튜디오의 핵심 검증 흐름을 만든다.
 - `python -m realtosim.validate`, `oracle`, `report` 명령 동작.
 - `logs/<set>/` 15개 이상, 퍼즐별 `puzzle_ended` 10개 이상.
 - 현 상태: `logs/drunkard-set/` 5회로 기준 미달. 기준 하향 없이 기록만 한다.
+- 결정(2026-11-05): 추가 실행 없이 현재 5회 표본으로 확정한다. 기준(15회·퍼즐별 10개·사고방식 각 5회)은 그대로 두고 미달 사실만 `reports/drunkard-set/report.md` 한계 절에 남긴다. 변경 사유: 남은 시간을 뷰어 마감과 데모 영상에 쓰기로 했다.
 
 ## 갈래 2 specify 입력
 

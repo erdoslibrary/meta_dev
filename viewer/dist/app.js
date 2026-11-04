@@ -826,6 +826,9 @@ function renderPanels(feed, resultBox, log, upto, opts) {
     if (last && last.type === "end") {
         const outcome = last.outcome;
         panelText(resultBox, outcome === "completed" ? "완주" : "끊김(" + outcome + "): 완주 아님");
+        if (outcome === "completed") {
+            panelText(resultBox, "So long, and thanks for all the fish", "closing");
+        }
     }
 }
 /* Floor planes from space.json (global script). 1 cell = 1 m. */

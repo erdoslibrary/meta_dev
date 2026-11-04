@@ -8,6 +8,7 @@
 **변경 사유 (2026-11-04)**: `embed.py` 실행 규칙을 반영. 표준 라이브러리 + `jsonschema`만 허용하고(새 패키지 설치 없음) `.venv/bin/python`으로 실행하며, 환경 문제로 실패하면 원문과 함께 보고한다(항목 3).
 **변경 사유 (2026-11-04)**: 표본 구조를 바로 아래 `*.json`·`refusal/`·`sets/<puzzle_set_id>/`로 정한다(차단 4, 권장 6).
 **변경 사유 (2026-11-04)**: 지시 1~15 문서 수정 반영. Constitution Check·구조에 T035·T036 unittest 추가를 반영한다(새 러너 없음).
+**변경 사유 (2026-11-05)**: PRD OPEN-4 보완 반영. Slice 4에 랜딩 영어 전용과 닫는 주문 결과 박스 꼬리말 표시를 적는다.
 
 ## Summary
 
@@ -95,7 +96,7 @@ tests/                   # 기존 유지 + T035·T036 unittest(새 러너 없음
 - **Slice 1 (US1, P1)**: 평면 + 발자국 궤적(`Line`+`Points`) + 로딩 기반(`embed.py`, `data.js`, 파일 선택). 수용: 궤적 점 = `move` 수 + 1, 끊김·실패 표시(Seal Red는 `puzzle_ended(failed)`·`end(action_limit)`·`end(api_error)`에만, 랜딩 화면 예외). 잉크 효과는 랜딩 화면에만.
 - **Slice 2 (US2, P2)**: 고스트 재생(`view` 사진·`npc_dialogue`·`on_wrong`/`on_correct`·`puzzle_ended`, `failed` 정답·`next_instruction` 1회). 수용: 오라클 끊김 없음.
 - **Slice 3 (US3, P3)**: 층 전환(다층 표본 `testdata/`, 단층 무UI).
-- **Slice 4 (FR-006+FR-007)**: 주문·잉크 연출(수용 R-6: 진입 전 랜딩 화면, 실행자 본인인 듯한 연출) + 배포(컴파일 JS 커밋, R-5). 진입 방식(버튼/자동)은 착수 시 정한다.
+- **Slice 4 (FR-006+FR-007)**: 주문·잉크 연출(수용 R-6: 진입 전 랜딩 화면, 실행자 본인인 듯한 연출) + 배포(컴파일 JS 커밋, R-5). 진입 방식(버튼/자동)은 착수 시 정한다. 보완(2026-11-05): 랜딩은 영어 전용(여는 주문 + `Enter`), 닫는 주문은 별도 화면 없이 `end(completed)` 결과 박스 꼬리말 한 줄로 표시하며 완주 표시는 그대로 둔다.
 
 ## Complexity Tracking
 
