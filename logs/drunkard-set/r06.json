@@ -1,0 +1,63 @@
+{
+  "run_id": "r06",
+  "persona": {
+    "age": 52,
+    "job": "농부",
+    "vocab": "하",
+    "thinking": "문자 그대로 읽음"
+  },
+  "puzzle_set_id": "drunkard-set",
+  "model": "muse-spark-1.3",
+  "events": [
+    {
+      "t": 1,
+      "puzzle": 1,
+      "type": "move",
+      "value": "C4"
+    },
+    {
+      "t": 2,
+      "puzzle": 1,
+      "type": "view",
+      "value": "signboard@C4"
+    },
+    {
+      "t": 3,
+      "puzzle": 1,
+      "type": "npc_dialogue",
+      "npc": "drunkard"
+    },
+    {
+      "t": 4,
+      "puzzle": 1,
+      "type": "answer_submitted",
+      "value": "나선형계단앞",
+      "attempt": 1,
+      "correct": false,
+      "reason": "나는 52살 농부다. 어려운 말은 몰라. 병에 빨간 첫 글자만 봤다. 돌고 돌고 하라 해서 돌려 보니 S P I R A L 빙글빙글 도는 거다. STEP은 계단이다. 그래서 빙글빙글 도는 계단 앞으로 간다."
+    },
+    {
+      "t": 5,
+      "puzzle": 1,
+      "type": "answer_submitted",
+      "value": "SPIRAL",
+      "attempt": 2,
+      "correct": true,
+      "reason": "병 여섯 개를 봤다. 병에 글자가 적혀 있다. LIGHT, INFER, ROSA, PARI, STEP, ANGEL. 첫 글자만 떼었다. L, I, R, P, S, A다. 모아 보니 SPIRAL이 된다. 아저씨가 돌고 돈다고 노래를 불렀다. 술 마시고 부끄럽고 또 마시고 돈다. 소용돌이다. 그래서 답은 SPIRAL이다."
+    },
+    {
+      "t": 6,
+      "puzzle": 1,
+      "type": "puzzle_ended",
+      "result": "solved_by_dialogue",
+      "attempts_used": 2
+    },
+    {
+      "t": 7,
+      "puzzle": 1,
+      "type": "end",
+      "outcome": "completed"
+    }
+  ],
+  "seed": 0
+}

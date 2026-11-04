@@ -56,6 +56,11 @@ interface SpaceFloor {
 interface SpaceRoom { name: string; cells: string; }
 interface SpaceObject {
   id: string; cells: string; photos: string[]; label: string;
+  description?: string;
+}
+interface ChronicleStep {
+  upto: number;
+  subStep: number;
 }
 interface SpaceData {
   space_id: string; floors: SpaceFloor[];

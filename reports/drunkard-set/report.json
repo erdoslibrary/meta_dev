@@ -2,15 +2,15 @@
   "puzzle_set_id": "drunkard-set",
   "verdict": "판정: 통과",
   "aggregation": {
-    "runs": 5,
+    "runs": 13,
     "interrupted": 0,
     "puzzles": {
       "1": {
-        "ended": 5,
-        "avg_score": 0.8,
-        "fail_rate": 0.0,
-        "hint_rate": 0.4,
-        "first_try_rate": 0.6,
+        "ended": 13,
+        "avg_score": 1.8461538461538463,
+        "fail_rate": 0.07692307692307693,
+        "hint_rate": 0.46153846153846156,
+        "first_try_rate": 0.3076923076923077,
         "controversial": false,
         "top_wrongs": [
           {

@@ -1,0 +1,87 @@
+{
+  "run_id": "r08",
+  "persona": {
+    "age": 50,
+    "job": "공무원",
+    "vocab": "하",
+    "thinking": "말장난을 먼저 떠올림"
+  },
+  "puzzle_set_id": "drunkard-set",
+  "model": "muse-spark-1.3",
+  "events": [
+    {
+      "t": 1,
+      "puzzle": 1,
+      "type": "move",
+      "value": "C4"
+    },
+    {
+      "t": 2,
+      "puzzle": 1,
+      "type": "view",
+      "value": "signboard@C4"
+    },
+    {
+      "t": 3,
+      "puzzle": 1,
+      "type": "npc_dialogue",
+      "npc": "drunkard"
+    },
+    {
+      "t": 4,
+      "puzzle": 1,
+      "type": "answer_submitted",
+      "value": "나선형계단 앞",
+      "attempt": 1,
+      "correct": false,
+      "reason": "병 돌리고 돌리고 노래가 빙글빙글 도는 거잖아. 병 라벨 첫 글자만 모아보니 L I R P S A, 이거 돌려 맞추면 SPIRAL, 나선이 되더라고. 그리고 STEP은 발 디딤, 계단 말장난이지. 나선+계단이면 나선형계단 앞이구만!"
+    },
+    {
+      "t": 5,
+      "puzzle": 1,
+      "type": "answer_submitted",
+      "value": "소용돌이계단",
+      "attempt": 2,
+      "correct": false,
+      "reason": "병 돌고 돌고 하니깐 빙글빙글 소용돌이가 생각나더라고. 빨간 글자 모아보니 S P I R A L 소용돌이잖아. STEP는 계단 말장난이고 1도 있으니 소용돌이계단으로 가야지."
+    },
+    {
+      "t": 6,
+      "puzzle": 1,
+      "type": "hint_revealed",
+      "level": 1
+    },
+    {
+      "t": 7,
+      "puzzle": 1,
+      "type": "answer_submitted",
+      "value": "나선형계단앞",
+      "attempt": 3,
+      "correct": false,
+      "reason": "병이 돌고돌고 나선처럼 돌아가유. 노래도 다시 돌고 돌고 했잖유. 그래서 돌돌이 계단, 나선형계단 앞으로 가야 하는 것 같아유."
+    },
+    {
+      "t": 8,
+      "puzzle": 1,
+      "type": "answer_submitted",
+      "value": "SPIRAL",
+      "attempt": 4,
+      "correct": true,
+      "reason": "병들이 빙글빙글 돌고 도네. 도는거 하면 소용돌이지. 그걸 영어로 스파이럴이라 카더라. 술이 술술 도니 말장난처럼 풀리네. 하하."
+    },
+    {
+      "t": 9,
+      "puzzle": 1,
+      "type": "puzzle_ended",
+      "result": "solved_with_hint",
+      "attempts_used": 4
+    },
+    {
+      "t": 10,
+      "puzzle": 1,
+      "type": "end",
+      "outcome": "completed"
+    }
+  ],
+  "seed": 0
+}
