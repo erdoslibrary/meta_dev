@@ -8,15 +8,17 @@
 
 **Input**: User description: "갈래2(지도, 연출, 뷰어) specify. 갈래1 로그만 읽고 갈래1을 바꾸지 않는다."
 
+**변경 사유 (2026-11-04)**: 문서 충돌 점검 반영. 로그에 없는 표시 데이터의 출처(FR-001), 노출 규칙(FR-005, US2), 검증 표본(FR-008), 궤적 점 개수(US1), 주문 장면 미결(Design Direction), 결정된 스택(Assumptions)을 정리. 입력 원문은 기록으로 유지.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - 평면도 위 발자국 확인 (Priority: P1)
 
 창작자가 평면도 위에서 에이전트가 어디를 맴돌았는지 발자국 궤적으로 확인한다. 시작점(`start_cell`)과 이동(`move.value`) 순서가 보인다.
 
-**Why this priority**: 창작자의 핵심 질문("어디서 맴돌았나, 어떤 사물을 못 봤나")에 답하는 최소 기능이다. 로그만으로 검증 가능하다.
+**Why this priority**: 창작자의 핵심 질문("어디서 맴돌았나, 어떤 사물을 못 봤나")에 답하는 최소 기능이다. API 키 없이 저장된 파일만으로 검증 가능하다.
 
-**Independent Test**: `logs/drunkard-set/` 로그 1개로 전체 궤적을 순서대로 재생하고, 궤적 점 개수가 해당 로그의 `move` 제출 수와 일치하면 통과.
+**Independent Test**: `logs/drunkard-set/` 로그 1개로 전체 궤적을 순서대로 재생하고, 궤적 점 개수가 해당 로그의 `move` 이벤트 수 + 1(`start_cell`)과 일치하면 통과.
 
 **Acceptance Scenarios**:
 
@@ -36,7 +38,7 @@
 **Acceptance Scenarios**:
 
 1. **Given** 완료 로그, **When** 처음부터 재생, **Then** `view` 지점마다 해당 사물 사진과 `npc_dialogue`가 나타나고, 퍼즐 종료마다 결과가 표시된다.
-2. **Given** 실패(`failed`) 포함 로그, **When** 해당 퍼즐 구간 재생, **Then** 정답 공개 1회 노출 규칙(TRD §4)이 그대로 보인다.
+2. **Given** 실패(`failed`) 포함 로그, **When** 해당 퍼즐 구간 재생, **Then** `puzzle_ended(failed)` 직후 `puzzle.json`의 정답이 1회 표시된다.
 
 ---
 
@@ -65,19 +67,19 @@
 
 ### Functional Requirements
 
-- **FR-001**: 뷰어는 갈래1 로그(`logs/<set>/`)만 읽는다. 엔진·로그 형식 변경을 요구하지 않는다.
+- **FR-001**: 뷰어는 실행 기록을 갈래1 로그(`logs/<set>/`)에서만 읽는다. 표시용 정적 데이터(평면도, 사물 사진, `start_cell`, 대화문, NPC 이름·이미지, `on_wrong`/`on_correct`, `failed` 퍼즐의 정답)는 `data/<set>/`에서 읽기 전용으로 가져온다. 엔진·로그·데이터 형식 변경을 요구하지 않는다.
 - **FR-002**: 사용자는 실행별 발자국 궤적(`start_cell` 시작, `move.value` 순서)을 볼 수 있다.
 - **FR-003**: 사용자는 `view` 지점의 사물 사진과 `npc_dialogue`, `on_wrong`/`on_correct` 반응을 순서대로 볼 수 있다.
 - **FR-004**: 사용자는 퍼즐별 종료 결과(`puzzle_ended.result`)를 궤적 위에서 확인할 수 있다.
-- **FR-005**: 뷰어는 TRD §4 노출 금지 필드를 새로 노출하지 않는다. 로그에 없는 정답·다음 장소·사진 경로를 추론·표시하지 않는다.
+- **FR-005**: TRD §4 노출 금지는 에이전트 관측 계약이며 뷰어 때문에 바꾸지 않는다. 뷰어 화면은 로그 이벤트로 확인된 시점에 FR-001 항목만 표시한다. `puzzle.json`의 정답은 `puzzle_ended(failed)` 직후에만 표시하고, 불러온 로그에서 `failed`가 아닌 퍼즐의 정답은 뷰어 산출물에 넣지 않는다. 로그의 `answer_submitted.value`는 제출 원문으로 표시할 수 있다. 다음 장소 지시와 사진 경로·해시는 화면에 표시하지 않는다.
 - **FR-006**: 스코프는 지도+고스트+층 전환에 주문·잉크 연출을 포함한다. 주문 연출은 기본 동작 완성 후 필수(동영상용). 주문·잉크의 수용 시나리오는 TRD 계약이 없어 plan 단계에서 구체화한다.
-- **FR-007**: 3D는 three.js, 언어는 TS로 한다. 번들러 없이 `tsc` 단일 출력만 사용한다. importmap+벤더 동봉, CDN 없음. Pages 배포 방식(컴파일 JS 커밋 vs Action 빌드)은 plan에서 결정. 서버 방식은 헌법 개정 없이 선택하지 않는다.
-- **FR-008**: 입력 로그는 현 5회 미달 표본(`logs/drunkard-set/`)으로 진행한다. 발자국·재생 검증이 제한적임을 전제한다.
+- **FR-007**: 3D는 three.js, 언어는 TS로 한다. 번들러 없이 `tsc` 단일 출력만 사용한다. three.js 벤더 파일을 동봉하고 CDN·외부 URL·로컬 서버 없이 `file://`로 연 페이지에서 동작한다. ES 모듈 스크립트·importmap, `fetch`·XHR 로컬 파일 읽기, 로컬 사진의 WebGL 텍스처에 의존하지 않으며(헌법 원칙 II), 구체 로딩 방식은 plan에서 정한다. Pages 배포 방식(컴파일 JS 커밋 vs Action 빌드)은 plan에서 결정. 서버 방식은 헌법 개정 없이 선택하지 않는다.
+- **FR-008**: 입력 로그는 현 5회 미달 표본(`logs/drunkard-set/`)으로 진행한다. 발자국·재생 검증이 제한적임을 전제한다. 실제 로그에 없는 실패·끊김·다층·다중 이동 경우는 `log.schema.json`을 통과하는 뷰어 테스트용 표본으로 검증하고, 표본을 `logs/<set>/`에 섞지 않는다. 표본 위치와 작성 방식은 plan에서 정한다.
 - **FR-009**: 뷰어 UI 기본 언어는 한국어다. 시간 여유 시 영어 전체 번역을 추가 작업으로 한다. 생성 보고서 구조의 영어화는 생성 코드 변경이 필요하므로 plan 이후에 판단한다.
 
 ### Key Entities
 
-- **재생 로그**: `log.schema.json` 통과 로그 1개. 궤적·대화·결과의 원천.
+- **재생 로그**: `log.schema.json` 통과 로그 1개. 궤적·대화 시점·결과의 원천. 대화문과 시작 칸은 `puzzle.json`에 있다.
 - **발자국**: `move.value` 순서열 + `start_cell`. 지도 위 궤적.
 - **고스트**: 1회 실행의 시간순 재생. 관측·반응·종료를 순서대로 보여준다.
 
@@ -98,7 +100,7 @@
 - Unexplored rooms blurred and desaturated. Explored rooms sharp.
 - System serif typeface. No webfonts (offline demo priority).
 - Trails drawn with SVG stroke-dashoffset ink effect. No libraries.
-- Order scene: red subtitle with edge vignette. No separate screen (matches Q1 option A unless decided otherwise).
+- Order scene (draft): red subtitle with edge vignette, no separate screen. Subject and screen scope stay open (PRD OPEN-4, TRD §11).
 
 ## Three.js Beginner Notes
 
@@ -111,9 +113,10 @@
 - 재질은 코드로 만든다. 이미지 파일 없음. 양피지 질감은 `CanvasTexture`로 그림.
 - 조명 1개. 그림자는 물체가 닿는 곳만.
 - 실행 방식: TS 작성 → `tsc` 1회 → JS 1개. 번들러 없음.
-- 브라우저 연결: importmap이 `three`를 동봉 벤더 파일로 연결. CDN 없음.
-- 버전 고정: 벤더 파일과 `@types/three` 동일 minor. 어긋나면 타입과 동작이 갈림.
+- 브라우저 연결: `three`는 동봉 벤더 파일로 제공한다. ES 모듈·importmap은 쓰지 않고, 구체 로딩 방식은 plan에서 정한다. CDN 없음.
+- 버전 고정: `three`(벤더 파일), `typescript`, `@types/three` 모두 정확한 버전. 어긋나면 타입과 동작이 갈림.
 - 오프라인 보장: 외부 URL 0개. `file://`로 열어도 동작한다.
+- 변경 사유(2026-11-04): FR-007과 이 절의 연결·버전 문구를 헌법 v1.2.0 원칙 II에 맞춤. importmap은 서버 없는 `file://` 실행과 양립하기 어렵다.
 
 ## Assumptions
 
@@ -122,4 +125,4 @@
 - 사람 플레이 브라우저 공개는 범위 밖이다(PRD Non-goals).
 - 주문·잉크 연출은 이번 범위에 포함된다. 마우스 평면도 빌더, SAM 제안, `prediction.json`, `revise`는 여유 항목으로 범위 밖이다(TRD §9).
 - 현 입력 로그는 5회 미달 표본이다(`reports/drunkard-set/report.md`에 명기).
-- 프론트 스택 미정은 spec 결함이 아니다. 스택은 HOW이므로 plan에서 결정한다.
+- 프론트 스택은 three.js + TS로 결정됐다(FR-007). 구체 로딩 방식과 배포 방식은 plan에서 결정한다.

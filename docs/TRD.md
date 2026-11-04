@@ -2,11 +2,12 @@
 
 - 상태: 재정비 v3 자립형. 이 문서가 HOW 기준이다. 구 `spec.md`/`design.md`/`acceptance.md`는 삭제됨.
 - 우선순위: 갈래 1(엔진, 검증, 로그, 보고서) 먼저. 갈래 2(지도, 연출, 뷰어)는 후순위 절로 분리.
-- 데이터 형식의 기준은 `docs/schemas/*.schema.json`이다. 계약 문장은 이 문서 §3~§11이 기준이다.
+- 데이터 형식의 기준은 `docs/schemas/*.schema.json`이다. 계약 문장은 이 문서 §3~§10이 기준이고, §11은 미결 인계다.
+- 변경 사유(2026-11-04): 문서 충돌 점검 반영. §1·§7 뷰어 입력 범위를 002 spec FR-001과 맞춤. §2·§9 결정된 스택과 실제 데이터 폴더에 맞춤. §2 테스트 절 번호 정정. §6 `httpx` 설치 상태 명시. 기준 범위를 AGENTS.md·헌법의 §3~§10과 맞춤.
 
 ## 1. 아키텍처
 
-갈래 1을 먼저 완성한다. 갈래 2는 로그만 읽으므로 나중에 합류해도 갈래 1을 바꾸지 않는다.
+갈래 1을 먼저 완성한다. 갈래 2는 실행 기록을 로그에서만 읽고 표시용 정적 데이터는 `data/<set>/`에서 읽기 전용으로 가져오므로, 나중에 합류해도 갈래 1을 바꾸지 않는다.
 
 흐름:
 
@@ -38,12 +39,12 @@
 - `realtosim/report.py`: 보고서 생성.
 - `realtosim/revise.py`: 여유 항목.
 - `realtosim/space_builder.py`: 여유 항목.
-- `data/<set>/`: `space.json`, `puzzle.json`, `baseline.json`, `prediction.json`(여유), `puzzles/`, `photos/`.
+- `data/<set>/`: `space.json`, `puzzle.json`, `npc.json`, `baseline.json`, `prediction.json`(여유), `puzzles/`, `npcs/`, `photos/`.
 - `logs/<set>/`: `r01.json` 등. 오라클은 `logs/<set>/oracle/r0.json`.
 - `reports/<set>/`: `replica.md`, `report.md`, `report.json`.
 - `workspace/cache/files.json`: sha256 → file_id. git 제외.
-- `tests/`: 스키마 테스트 + §9 테스트.
-- `viewer/`: 갈래 2. 스택 미결.
+- `tests/`: 스키마 테스트 + §10 테스트.
+- 갈래 2 뷰어: `realtosim/` 밖 별도 폴더. 이름은 002 plan에서 확정. 기술은 §9.
 
 규칙:
 
@@ -187,7 +188,7 @@
 
 이 절이 기준이다.
 
-- `model_api`만 Muse Spark를 직접 호출한다. `httpx` 사용.
+- `model_api`만 Muse Spark를 직접 호출한다. `httpx` 사용(`requirements.txt` 밖, 지연 import).
 - 모델명: `MODEL_API_MODEL`(기본 `muse-spark-1.3`), `SAM_MODEL`(기본 `sam-3.1`).
 - `make_client`: `MODEL_API_KEY`, `MODEL_API_BASE_URL`(기본 `https://api.meta.ai/v1`) 필요. 없으면 `MissingKeyError`.
 - `respond`: `POST {base}/responses`. 출력 텍스트는 `output[type=message]/content[type=output_text]`에서 모은다. 없으면 `""`.
@@ -217,7 +218,8 @@
 로그:
 
 - 기준은 `log.schema.json`. `t`는 이벤트 순번. 1부터 1씩 증가. 마지막만 `end`.
-- 갈래 2가 읽는 것: `npc_dialogue.npc`, `view` 뒤 `npc_dialogue`(AR 반응), `on_wrong`/`on_correct`(화면 전용), `puzzle_ended.result`, `move.value` 발자국, `start_cell` 시작점.
+- 갈래 2가 로그에서 읽는 것: `npc_dialogue.npc`, `view` 뒤 `npc_dialogue`(AR 반응), `answer_submitted`, `puzzle_ended.result`, `move.value` 발자국.
+- 갈래 2가 `data/<set>/`에서 읽는 것: `start_cell` 시작점, `dialogue`, `on_wrong`/`on_correct`(화면 전용), `failed` 퍼즐의 `answer`(`puzzle.json`). 평면도와 사물 사진(`space.json`). NPC 이름과 이미지(`npc.json`).
 
 ## 8. 보고서 분담
 
@@ -240,20 +242,22 @@ Muse가 맡는다(점수에 영향 없음):
 - 지도 화면, 고스트 재생, 주문 연출, 잉크 연출, 층 전환.
 - 002 범위: 위 5종 포함. 주문 연출은 기본 동작 완성 후 필수(동영상용). 수용 기준과 배포 방식은 002 plan에서 결정. §11 미결 유지.
 - 뷰어 기술: three.js(`WebGLRenderer`) + TS. `tsc` 단일 출력, 번들러 없음.
-- 연결: importmap → 동봉 벤더 파일. CDN·외부 URL 없음. `file://` 동작.
-- 버전 고정: 벤더 파일과 `@types/three` 동일 minor.
+- 연결: three.js 벤더 파일 동봉. CDN·외부 URL·번들러·로컬 서버 없이 `file://`로 연 페이지에서 동작. ES 모듈 스크립트·importmap, `fetch`·XHR 로컬 파일 읽기, 로컬 사진의 WebGL 텍스처에 의존하지 않는다. 구체 로딩 방식은 002 plan에서 정한다.
+- 버전 고정: `three`(벤더 파일), `typescript`, `@types/three` 모두 정확한 버전.
+- 변경 사유(2026-11-04): 헌법 v1.2.0 원칙 II. importmap은 서버 없는 `file://` 실행과 양립하기 어려워 연결 문구를 교체하고, 버전 고정을 정확한 버전으로 맞춤.
 - 디자인 톤: 양피지·먹·봉인 붉은색, 시스템 세리프. 상세는 002 spec Design Direction.
 - 이후 003 후보: 층수 → 마우스 평면도 → 사물·장소 → 사진·퀴즈 JSON → 풀이 검증 빌더. `space_builder.py` 여유 항목과 연결.
 - 마우스 평면도 빌더와 축척(문 폭 0.9m 기준)은 여유 항목.
 - SAM 제안(O4)과 사진 초안(O9)은 실제 사진으로 먼저 시험.
 - 저주 지수(`prediction.json`)와 수정 재검증(`revise`)은 여유 항목.
-- 프론트 스택은 뷰어 착수 시 결정. Pannellum 불필요 가능.
+- Pannellum 불필요 가능.
 
 ## 10. 테스트 기준
 
 - 모델 없이 표본(`docs/schemas/examples/valid/`)으로 엔진 검사. `model_api`는 `MockTransport`로 검사.
 - 거절 메시지는 §4 문장과 정확히 일치해야 한다.
-- 새 패키지 추가 금지. `requirements.txt`의 `jsonschema` 외 추가 없음.
+- 새 패키지 추가 금지. Python은 `requirements.txt`의 `jsonschema` 외 추가 없음. 뷰어는 `three`, `typescript`, `@types/three`만 정확한 버전으로 허용.
+- 변경 사유(2026-11-04): 헌법 v1.2.0 원칙 II의 뷰어 허용 목록 반영.
 - 확인: `python -m unittest discover tests -v`.
 
 엔진 시나리오(#1~#16, #18~#23, #28, #29):
