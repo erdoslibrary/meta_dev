@@ -860,37 +860,90 @@ function pxToWorld(px, floor) {
     const mpp = floor.meters_per_pixel;
     return {
         x: (px.x - floor.origin_px.x) * mpp - floor.columns / 2,
-        z: (px.y - floor.origin_px.y) * mpp + floor.rows / 2,
+        z: (floor.origin_px.y - px.y) * mpp - floor.rows / 2,
     };
 }
 /** One floor plane with walls. Unexplored = desaturated + translucent. */
 function buildFloorPlane(floor, explored) {
+    const W = floor.columns;
+    const H = floor.rows;
+    const hw = W / 2;
+    const hh = H / 2;
     const group = new THREE.Group();
-    const geo = new THREE.PlaneGeometry(floor.columns, floor.rows);
-    const mat = new THREE.MeshBasicMaterial({ map: parchmentTexture() });
-    if (!explored) {
-        mat.color.set("#8a8378");
-        mat.transparent = true;
-        mat.opacity = 0.55;
-    }
-    const plane = new THREE.Mesh(geo, mat);
+    const mount = new THREE.Mesh(new THREE.PlaneGeometry(W + 2.8, H + 2.8), new THREE.MeshBasicMaterial({ map: parchmentTexture("mount"), color: "#d9cdb4" }));
+    mount.rotation.x = -Math.PI / 2;
+    mount.position.set(0, -0.01, 0);
+    group.add(mount);
+    const plane = new THREE.Mesh(new THREE.PlaneGeometry(W, H), new THREE.MeshBasicMaterial({
+        map: parchmentTexture("main"),
+        color: explored ? "#ffffff" : "#e4dfd6",
+        transparent: !explored,
+        opacity: explored ? 1 : 0.72,
+    }));
     plane.rotation.x = -Math.PI / 2;
+    plane.position.set(0, 0, 0);
     group.add(plane);
-    const pts = [];
-    const push = (p) => {
-        const w = pxToWorld(p, floor);
-        pts.push(w.x, 0.02, w.z);
+    const segs = (list, color, opacity, ro) => {
+        const geo = new THREE.BufferGeometry();
+        geo.setAttribute("position", new THREE.Float32BufferAttribute(list, 3));
+        const ls = new THREE.LineSegments(geo, new THREE.LineBasicMaterial({ color, transparent: true, opacity, depthWrite: false }));
+        ls.renderOrder = ro || 1;
+        return ls;
     };
-    for (const wall of floor.walls) {
-        push(wall.from);
-        push(wall.to);
+    const thick = (out, ax, az, bx, bz, y, offs, ext) => {
+        const dx = bx - ax;
+        const dz = bz - az;
+        const L = Math.hypot(dx, dz) || 1;
+        const ux = dx / L;
+        const uz = dz / L;
+        const nx = -uz;
+        const nz = ux;
+        for (const o of offs) {
+            out.push(ax - ux * ext + nx * o, y, az - uz * ext + nz * o, bx + ux * ext + nx * o, y, bz + uz * ext + nz * o);
+        }
+    };
+    const rect = (out, x0, z0, x1, z1, y, offs) => {
+        thick(out, x0, z0, x1, z0, y, offs, 0);
+        thick(out, x1, z0, x1, z1, y, offs, 0);
+        thick(out, x1, z1, x0, z1, y, offs, 0);
+        thick(out, x0, z1, x0, z0, y, offs, 0);
+    };
+    const grid = [];
+    for (let ix = 1; ix < W; ix++) {
+        const x = -hw + ix;
+        grid.push(x, 0.004, -hh, x, 0.004, hh);
     }
-    const wallGeo = new THREE.BufferGeometry();
-    wallGeo.setAttribute("position", new THREE.Float32BufferAttribute(pts, 3));
-    const wallMat = new THREE.LineBasicMaterial({
-        color: explored ? INK_MAIN : "#6a655c",
-    });
-    group.add(new THREE.LineSegments(wallGeo, wallMat));
+    for (let iz = 1; iz < H; iz++) {
+        const z = -hh + iz;
+        grid.push(-hw, 0.004, z, hw, 0.004, z);
+    }
+    group.add(segs(grid, INK_MAIN, explored ? 0.11 : 0.07, 1));
+    const o1 = 0.62;
+    const o2 = 0.38;
+    const border = [];
+    const ticks = [];
+    rect(border, -hw - o1, -hh - o1, hw + o1, hh + o1, 0.006, [-0.03, -0.015, 0, 0.015]);
+    rect(border, -hw - o2, -hh - o2, hw + o2, hh + o2, 0.006, [0]);
+    group.add(segs(border, INK_MAIN, 0.9, 2));
+    for (let ix = 0; ix <= W; ix++) {
+        const x = -hw + ix;
+        const l = ix % 5 === 0 ? o1 - 0.05 : o2 + 0.1;
+        ticks.push(x, 0.006, -hh - o2, x, 0.006, -hh - l, x, 0.006, hh + o2, x, 0.006, hh + l);
+    }
+    for (let iz = 0; iz <= H; iz++) {
+        const z = -hh + iz;
+        const l = iz % 5 === 0 ? o1 - 0.05 : o2 + 0.1;
+        ticks.push(-hw - o2, 0.006, z, -hw - l, 0.006, z, hw + o2, 0.006, z, hw + l, 0.006, z);
+    }
+    group.add(segs(ticks, INK_MAIN, 0.7, 2));
+    const walls = [];
+    const offs = [-0.06, -0.04, -0.02, 0, 0.02, 0.04, 0.06];
+    for (const wall of floor.walls) {
+        const a = pxToWorld(wall.from, floor);
+        const b = pxToWorld(wall.to, floor);
+        thick(walls, a.x, a.z, b.x, b.z, 0.01, offs, 0.06);
+    }
+    group.add(segs(walls, explored ? INK_MAIN : INK_FADED, explored ? 1 : 0.55, 3));
     return group;
 }
 /* THREE scene with repeat rendering + context-loss recovery (global script). */
@@ -899,6 +952,7 @@ let sceneHandle = null;
 let sceneCamera = null;
 let rafId = 0;
 let canvasEl = null;
+const orbit = { theta: 0, phi: 0.72, radius: 23.2 };
 /** Rebuild hook set by the wiring (plane/trail re-add their objects). */
 let rebuildHook = null;
 function onSceneRebuild(hook) {
@@ -911,33 +965,22 @@ function sceneSize() {
 }
 let sceneColumns = 0;
 let sceneRows = 0;
-function extentHalf() {
-    if (sceneColumns > 0 && sceneRows > 0)
-        return Math.max(sceneColumns, sceneRows) / 2 * 1.2;
-    return 8;
-}
-/** Fit the orthographic view to the active floor grid. */
+/** Fit the perspective orbit radius to the active floor grid. */
 function setSceneExtent(columns, rows) {
-    sceneColumns = columns;
-    sceneRows = rows;
-    if (sceneCamera) {
-        const { w, h } = sceneSize();
-        const half = extentHalf();
-        sceneCamera.left = -half * (w / h);
-        sceneCamera.right = half * (w / h);
-        sceneCamera.top = half;
-        sceneCamera.bottom = -half;
-        sceneCamera.updateProjectionMatrix();
+    if (columns !== sceneColumns || rows !== sceneRows) {
+        sceneColumns = columns;
+        sceneRows = rows;
+        if (columns > 0 && rows > 0) {
+            orbit.radius = Math.max(columns, rows) * 1.45;
+        }
     }
 }
 function buildScene() {
+    resetThemeTextures();
     sceneHandle = new THREE.Scene();
-    sceneHandle.background = new THREE.Color("#E9DCC0");
+    sceneHandle.background = new THREE.Color(INK_MAIN);
     const { w, h } = sceneSize();
-    const half = extentHalf();
-    sceneCamera = new THREE.OrthographicCamera(-half * (w / h), half * (w / h), half, -half, 0.1, 100);
-    sceneCamera.position.set(0, 10, 0.01);
-    sceneCamera.lookAt(0, 0, 0);
+    sceneCamera = new THREE.PerspectiveCamera(38, w / h, 0.1, 500);
     if (rebuildHook)
         rebuildHook();
 }
@@ -946,6 +989,10 @@ function renderLoop() {
     if (sceneRenderer && sceneHandle && sceneCamera) {
         const { w, h } = sceneSize();
         sceneRenderer.setSize(w, h, false);
+        sceneCamera.aspect = w / h;
+        sceneCamera.updateProjectionMatrix();
+        sceneCamera.position.set(orbit.radius * Math.sin(orbit.phi) * Math.sin(orbit.theta), orbit.radius * Math.cos(orbit.phi), orbit.radius * Math.sin(orbit.phi) * Math.cos(orbit.theta));
+        sceneCamera.lookAt(0, 0, 0);
         sceneRenderer.render(sceneHandle, sceneCamera);
     }
 }
@@ -955,6 +1002,31 @@ function startScene(canvas) {
         return;
     canvasEl = canvas;
     sceneRenderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+    sceneRenderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    sceneRenderer.setClearColor(INK_MAIN, 1);
+    let drag = null;
+    canvas.addEventListener("pointerdown", (e) => {
+        drag = { x: e.clientX, y: e.clientY };
+        canvas.setPointerCapture(e.pointerId);
+        canvas.style.cursor = "grabbing";
+    });
+    canvas.addEventListener("pointermove", (e) => {
+        if (!drag)
+            return;
+        orbit.theta -= (e.clientX - drag.x) * 0.006;
+        orbit.phi = Math.min(1.35, Math.max(0.08, orbit.phi - (e.clientY - drag.y) * 0.005));
+        drag = { x: e.clientX, y: e.clientY };
+    });
+    const up = () => {
+        drag = null;
+        canvas.style.cursor = "grab";
+    };
+    canvas.addEventListener("pointerup", up);
+    canvas.addEventListener("pointercancel", up);
+    canvas.addEventListener("wheel", (e) => {
+        e.preventDefault();
+        orbit.radius = Math.min(80, Math.max(5, orbit.radius * (1 + e.deltaY * 0.001)));
+    }, { passive: false });
     buildScene();
     canvas.addEventListener("webglcontextlost", (e) => {
         e.preventDefault();
@@ -976,6 +1048,7 @@ const INK_MAIN = "#2A2118";
 const PAPER_HI = "#E9DCC0";
 const PAPER_LO = "#DCCFAC";
 const SEAL_RED = "#A0322B";
+const INK_FADED = "#8a8378";
 /** Seal red is for cutoff/failure segments only (landing screen excepted). */
 function isSealSegment(kind, outcome) {
     if (kind === "puzzle_ended" && outcome === "failed")
@@ -985,42 +1058,242 @@ function isSealSegment(kind, outcome) {
     }
     return false;
 }
-/** Code-generated parchment texture (no photo WebGL textures). */
-function parchmentTexture() {
-    const canvas = document.createElement("canvas");
-    canvas.width = 256;
-    canvas.height = 256;
-    const ctx = canvas.getContext("2d");
-    if (ctx) {
-        const grad = ctx.createLinearGradient(0, 0, 256, 256);
-        grad.addColorStop(0, PAPER_HI);
-        grad.addColorStop(1, PAPER_LO);
-        ctx.fillStyle = grad;
-        ctx.fillRect(0, 0, 256, 256);
-        ctx.fillStyle = "rgba(42, 33, 24, 0.06)";
-        for (let i = 0; i < 300; i++) {
-            const x = (i * 37) % 256;
-            const y = (i * 91) % 256;
-            ctx.fillRect(x, y, 2, 1);
-        }
+let _seedBump = 0;
+function seeded(seed) {
+    let s = (seed >>> 0) || 1;
+    return () => {
+        s ^= s << 13;
+        s >>>= 0;
+        s ^= s >>> 17;
+        s ^= s << 5;
+        s >>>= 0;
+        return s / 4294967296;
+    };
+}
+function makeParchmentCanvas() {
+    const S = 512;
+    const cv = document.createElement("canvas");
+    cv.width = cv.height = S;
+    const g = cv.getContext("2d");
+    const r = seeded(1851 + 97 * _seedBump++);
+    const base = g.createLinearGradient(0, 0, S, S);
+    base.addColorStop(0, PAPER_HI);
+    base.addColorStop(0.55, "#E3D5B6");
+    base.addColorStop(1, PAPER_LO);
+    g.fillStyle = base;
+    g.fillRect(0, 0, S, S);
+    for (let i = 0; i < 46; i++) {
+        const x = r() * S;
+        const y = r() * S;
+        const rad = 18 + r() * 90;
+        const a = 0.025 + r() * 0.05;
+        const m = g.createRadialGradient(x, y, 0, x, y, rad);
+        m.addColorStop(0, `rgba(150,112,62,${a})`);
+        m.addColorStop(1, "rgba(150,112,62,0)");
+        g.fillStyle = m;
+        g.fillRect(x - rad, y - rad, rad * 2, rad * 2);
     }
-    const tex = new THREE.CanvasTexture(canvas);
-    tex.wrapS = THREE.RepeatWrapping;
-    tex.wrapT = THREE.RepeatWrapping;
-    return tex;
+    const fold = (x0, y0, x1, y1) => {
+        const line = (o, w, c) => {
+            g.beginPath();
+            g.moveTo(x0 + o, y0);
+            g.lineTo(x1 + o, y1);
+            g.lineWidth = w;
+            g.strokeStyle = c;
+            g.stroke();
+        };
+        line(0, 14, "rgba(120,85,45,0.035)");
+        line(0, 1.1, "rgba(90,62,30,0.17)");
+        line(1.6, 1, "rgba(255,250,235,0.32)");
+    };
+    fold(0, 0, S, S);
+    fold(S, 0, 0, S);
+    fold(S * 0.5, 0, S * 0.46, S);
+    const img = g.getImageData(0, 0, S, S);
+    const d = img.data;
+    for (let i = 0; i < d.length; i += 4) {
+        const n = (r() - 0.5) * 14;
+        d[i] += n;
+        d[i + 1] += n;
+        d[i + 2] += n * 0.8;
+    }
+    g.putImageData(img, 0, 0);
+    for (let i = 0; i < 900; i++) {
+        g.fillStyle = `rgba(60,40,20,${0.08 + r() * 0.25})`;
+        g.beginPath();
+        g.arc(r() * S, r() * S, 0.3 + r() * 1.1, 0, Math.PI * 2);
+        g.fill();
+    }
+    g.strokeStyle = "rgba(90,66,40,0.12)";
+    g.lineWidth = 0.6;
+    for (let i = 0; i < 70; i++) {
+        const x = r() * S;
+        const y = r() * S;
+        const a = r() * Math.PI;
+        const l = 3 + r() * 9;
+        g.beginPath();
+        g.moveTo(x, y);
+        g.lineTo(x + Math.cos(a) * l, y + Math.sin(a) * l);
+        g.stroke();
+    }
+    const e = g.createRadialGradient(S / 2, S / 2, S * 0.3, S / 2, S / 2, S * 0.74);
+    e.addColorStop(0, "rgba(92,58,26,0)");
+    e.addColorStop(0.66, "rgba(110,72,34,0.1)");
+    e.addColorStop(0.88, "rgba(84,50,20,0.3)");
+    e.addColorStop(1, "rgba(48,28,12,0.55)");
+    g.fillStyle = e;
+    g.fillRect(0, 0, S, S);
+    for (let i = 0; i < 60; i++) {
+        const side = i % 4;
+        const t = r() * S;
+        const x = side === 0 ? t : side === 1 ? S : side === 2 ? t : 0;
+        const y = side === 0 ? 0 : side === 1 ? t : side === 2 ? S : t;
+        const rad = 10 + r() * 34;
+        const m = g.createRadialGradient(x, y, 0, x, y, rad);
+        m.addColorStop(0, "rgba(55,32,14,0.4)");
+        m.addColorStop(1, "rgba(55,32,14,0)");
+        g.fillStyle = m;
+        g.fillRect(x - rad, y - rad, rad * 2, rad * 2);
+    }
+    return cv;
+}
+function makeInkDotCanvas() {
+    const S = 64;
+    const cv = document.createElement("canvas");
+    cv.width = cv.height = S;
+    const g = cv.getContext("2d");
+    const r = seeded(77);
+    g.fillStyle = "#fff";
+    g.beginPath();
+    for (let i = 0; i <= 24; i++) {
+        const a = (i / 24) * Math.PI * 2;
+        const rad = 17 + (r() - 0.5) * 6;
+        const x = 32 + Math.cos(a) * rad;
+        const y = 32 + Math.sin(a) * rad;
+        if (i)
+            g.lineTo(x, y);
+        else
+            g.moveTo(x, y);
+    }
+    g.fill();
+    for (let i = 0; i < 6; i++) {
+        const a = r() * Math.PI * 2;
+        const d = 21 + r() * 7;
+        g.beginPath();
+        g.arc(32 + Math.cos(a) * d, 32 + Math.sin(a) * d, 1.2 + r() * 2.4, 0, Math.PI * 2);
+        g.fill();
+    }
+    g.globalCompositeOperation = "destination-out";
+    const hole = g.createRadialGradient(28, 28, 0, 32, 32, 16);
+    hole.addColorStop(0, "rgba(0,0,0,0.35)");
+    hole.addColorStop(1, "rgba(0,0,0,0)");
+    g.fillStyle = hole;
+    g.fillRect(0, 0, S, S);
+    return cv;
+}
+function makeStampCanvas(result) {
+    const S = 256;
+    const cv = document.createElement("canvas");
+    cv.width = cv.height = S;
+    const g = cv.getContext("2d");
+    const r = seeded(result === "solved" ? 5 : 9);
+    const c = result === "solved" ? INK_MAIN : SEAL_RED;
+    g.strokeStyle = c;
+    g.fillStyle = c;
+    g.lineWidth = 12;
+    g.beginPath();
+    g.arc(128, 128, 114, 0, Math.PI * 2);
+    g.stroke();
+    g.lineWidth = 3;
+    g.beginPath();
+    g.arc(128, 128, 96, 0, Math.PI * 2);
+    g.stroke();
+    for (let i = 0; i < 4; i++) {
+        const a = (i * Math.PI) / 2 + Math.PI / 4;
+        g.beginPath();
+        g.arc(128 + Math.cos(a) * 105, 128 + Math.sin(a) * 105, 3, 0, Math.PI * 2);
+        g.fill();
+    }
+    g.textAlign = "center";
+    g.textBaseline = "middle";
+    g.font = 'bold 58px Georgia, "Times New Roman", "Batang", serif';
+    g.fillText(result === "solved" ? "해결" : "봉인", 128, 118);
+    g.font = 'italic 20px Georgia, "Times New Roman", serif';
+    g.fillText(result === "solved" ? "SOLVED" : "SEALED", 128, 166);
+    g.globalCompositeOperation = "destination-out";
+    for (let i = 0; i < 520; i++) {
+        g.fillStyle = `rgba(0,0,0,${0.3 + r() * 0.6})`;
+        g.beginPath();
+        g.arc(r() * S, r() * S, 0.6 + r() * 2.2, 0, Math.PI * 2);
+        g.fill();
+    }
+    return cv;
+}
+let _texParchmentMount = null;
+let _texParchmentMain = null;
+let _texInkDot = null;
+let _texStampSolved = null;
+let _texStampFailed = null;
+function resetThemeTextures() {
+    _seedBump = 0;
+    _texParchmentMount = null;
+    _texParchmentMain = null;
+    _texInkDot = null;
+    _texStampSolved = null;
+    _texStampFailed = null;
+}
+/** Code-generated parchment texture (no photo WebGL textures). */
+function parchmentTexture(kind = "main") {
+    if (kind === "mount") {
+        if (!_texParchmentMount) {
+            _texParchmentMount = new THREE.CanvasTexture(makeParchmentCanvas());
+            _texParchmentMount.colorSpace = THREE.SRGBColorSpace;
+        }
+        return _texParchmentMount;
+    }
+    if (!_texParchmentMain) {
+        _texParchmentMain = new THREE.CanvasTexture(makeParchmentCanvas());
+        _texParchmentMain.colorSpace = THREE.SRGBColorSpace;
+    }
+    return _texParchmentMain;
+}
+function inkDotTexture() {
+    if (!_texInkDot) {
+        _texInkDot = new THREE.CanvasTexture(makeInkDotCanvas());
+        _texInkDot.colorSpace = THREE.SRGBColorSpace;
+    }
+    return _texInkDot;
+}
+function stampTexture(result) {
+    if (result === "solved") {
+        if (!_texStampSolved) {
+            _texStampSolved = new THREE.CanvasTexture(makeStampCanvas("solved"));
+            _texStampSolved.colorSpace = THREE.SRGBColorSpace;
+        }
+        return _texStampSolved;
+    }
+    if (!_texStampFailed) {
+        _texStampFailed = new THREE.CanvasTexture(makeStampCanvas("failed"));
+        _texStampFailed.colorSpace = THREE.SRGBColorSpace;
+    }
+    return _texStampFailed;
 }
 /* Footprint trajectory: Line + Points (global script). */
 /** Points = move count + 1 (caller prepends start_cell). */
 function buildTrail(points, sealAt) {
     const group = new THREE.Group();
     const positions = new Float32Array(points.length * 3);
+    const dotPositions = new Float32Array(points.length * 3);
     const colors = new Float32Array(points.length * 3);
     const ink = new THREE.Color(INK_MAIN);
     const seal = new THREE.Color(SEAL_RED);
     for (let i = 0; i < points.length; i++) {
         positions[i * 3] = points[i].x;
-        positions[i * 3 + 1] = 0.05;
+        positions[i * 3 + 1] = 0.03;
         positions[i * 3 + 2] = points[i].z;
+        dotPositions[i * 3] = points[i].x;
+        dotPositions[i * 3 + 1] = 0.035;
+        dotPositions[i * 3 + 2] = points[i].z;
         const last = sealAt.indexOf(i) !== -1;
         const c = last ? seal : ink;
         colors[i * 3] = c.r;
@@ -1030,12 +1303,61 @@ function buildTrail(points, sealAt) {
     const lineGeo = new THREE.BufferGeometry();
     lineGeo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
     lineGeo.setAttribute("color", new THREE.BufferAttribute(colors, 3));
-    const line = new THREE.Line(lineGeo, new THREE.LineBasicMaterial({ vertexColors: true }));
+    const line = new THREE.Line(lineGeo, new THREE.LineBasicMaterial({
+        vertexColors: true,
+        transparent: true,
+        opacity: 0.85,
+        depthWrite: false
+    }));
+    line.renderOrder = 4;
     group.add(line);
+    const dashCoords = [];
+    for (let i = 1; i < points.length; i++) {
+        if (sealAt.indexOf(i) !== -1 && sealAt.indexOf(i - 1) !== -1) {
+            dashCoords.push(points[i - 1].x, 0.032, points[i - 1].z, points[i].x, 0.032, points[i].z);
+        }
+    }
+    if (dashCoords.length > 0) {
+        const dashGeo = new THREE.BufferGeometry();
+        dashGeo.setAttribute("position", new THREE.BufferAttribute(new Float32Array(dashCoords), 3));
+        const dashLine = new THREE.LineSegments(dashGeo, new THREE.LineDashedMaterial({
+            color: SEAL_RED,
+            dashSize: 0.22,
+            gapSize: 0.14,
+            transparent: true,
+            depthWrite: false
+        }));
+        dashLine.computeLineDistances();
+        dashLine.renderOrder = 4;
+        group.add(dashLine);
+    }
     const dotGeo = new THREE.BufferGeometry();
-    dotGeo.setAttribute("position", new THREE.BufferAttribute(positions.slice(), 3));
-    const dots = new THREE.Points(dotGeo, new THREE.PointsMaterial({ size: 0.22, vertexColors: false, color: ink }));
+    dotGeo.setAttribute("position", new THREE.BufferAttribute(dotPositions, 3));
+    dotGeo.setAttribute("color", new THREE.BufferAttribute(colors.slice(), 3));
+    const dots = new THREE.Points(dotGeo, new THREE.PointsMaterial({
+        size: 0.34,
+        map: inkDotTexture(),
+        vertexColors: true,
+        alphaTest: 0.1,
+        transparent: true,
+        depthWrite: false,
+        sizeAttenuation: true
+    }));
+    dots.renderOrder = 5;
     group.add(dots);
+    if (points.length > 0) {
+        const head = points[points.length - 1];
+        const headRing = new THREE.Mesh(new THREE.RingGeometry(0.2, 0.3, 32), new THREE.MeshBasicMaterial({
+            color: INK_MAIN,
+            transparent: true,
+            depthWrite: false,
+            side: THREE.DoubleSide
+        }));
+        headRing.rotation.x = -Math.PI / 2;
+        headRing.position.set(head.x, 0.05, head.z);
+        headRing.renderOrder = 7;
+        group.add(headRing);
+    }
     if (points.length > 0 && sealAt.indexOf(points.length - 1) !== -1) {
         const tip = points[points.length - 1];
         const marker = new THREE.Mesh(new THREE.CircleGeometry(0.28, 24), new THREE.MeshBasicMaterial({ color: seal }));
@@ -1047,10 +1369,16 @@ function buildTrail(points, sealAt) {
 }
 /** Mark a puzzle_ended result on the trajectory (FR-004). */
 function addResultMarker(group, at, result) {
-    const color = result === "failed" ? SEAL_RED : INK_MAIN;
-    const ring = new THREE.Mesh(new THREE.RingGeometry(0.3, 0.42, 24), new THREE.MeshBasicMaterial({ color, side: THREE.DoubleSide }));
-    ring.rotation.x = -Math.PI / 2;
-    ring.position.set(at.x, 0.06, at.z);
-    group.add(ring);
+    const stamp = new THREE.Mesh(new THREE.PlaneGeometry(1.8, 1.8), new THREE.MeshBasicMaterial({
+        map: stampTexture(result === "failed" ? "failed" : "solved"),
+        transparent: true,
+        opacity: 0.92,
+        depthWrite: false
+    }));
+    stamp.rotation.x = -Math.PI / 2;
+    stamp.rotation.z = result === "failed" ? 0.22 : -0.18;
+    stamp.position.set(at.x, 0.04, at.z);
+    stamp.renderOrder = 6;
+    group.add(stamp);
 }
 /* Log event + static-data types (global script, no import/export). */
