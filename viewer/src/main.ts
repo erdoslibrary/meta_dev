@@ -7,11 +7,27 @@ let currentReveal: { [puzzleNumber: string]: RevealEntry } | null = null;
 let currentFileLog = false;
 let currentPhotoBase = "";
 let currentNpcNames: { [id: string]: string } = {};
+let currentNpcs: { [id: string]: NpcData } = {};
 let logFloorKeys: string[] = [];
 let activeFloor: string | null = null;
 let ghost: Ghost | null = null;
+let chronicleSteps: ChronicleStep[] = [];
+let chronicleIdx = 0;
 let playTimer = 0;
 let contentGroup: THREE.Group | null = null;
+
+function rebuildChronicleSteps(): void {
+  if (!currentLog) {
+    chronicleSteps = [];
+    chronicleIdx = 0;
+    return;
+  }
+  const staticPuzzle = (currentStatic ? currentStatic.puzzle : null) || filePuzzle;
+  chronicleSteps = buildChronicleSteps(currentLog, staticPuzzle);
+  if (chronicleIdx >= chronicleSteps.length) {
+    chronicleIdx = Math.max(0, chronicleSteps.length - 1);
+  }
+}
 
 function el(id: string): HTMLElement | null {
   return document.getElementById(id);
@@ -143,11 +159,19 @@ function renderAll(): void {
     const scope = multi ? "층 " + floorLabel(visible || logFloorKeys[0]) + " " : "";
     info.textContent = scope + "발자국 " + pts.length + "점 (move " + movesTotal + " + 시작점)";
   }
-  if (tail && tail.type === "end" && tail.outcome !== "completed") {
+  const curStep =
+    chronicleSteps.length > 0 && chronicleIdx < chronicleSteps.length
+      ? chronicleSteps[chronicleIdx]
+      : { upto: st.t, subStep: Infinity };
+  const inPartialSubStep =
+    chronicleSteps.length > 0 &&
+    chronicleIdx < chronicleSteps.length - 1 &&
+    chronicleSteps[chronicleIdx + 1].upto === st.t;
+  if (!inPartialSubStep && tail && tail.type === "end" && tail.outcome !== "completed") {
     setStatus("끊김(" + tail.outcome + "): 끊긴 지점에서 멈춤. 끝까지 재생되지 않음.");
-  } else if (tail && tail.type === "puzzle_ended" && tail.result === "failed") {
+  } else if (!inPartialSubStep && tail && tail.type === "puzzle_ended" && tail.result === "failed") {
     setStatus("실패 구간: Seal Red 표시.");
-  } else if (st.t >= log.events.length) {
+  } else if (!inPartialSubStep && st.t >= log.events.length) {
     setStatus("재생 완료.");
   } else {
     setStatus("재생 중: " + st.t + "/" + log.events.length);
@@ -163,7 +187,9 @@ function renderAll(): void {
       fileLog: currentFileLog,
       photoBase: currentPhotoBase,
       npcNames: currentNpcNames,
+      npcs: currentNpcs,
       floor: multi ? (visible || logFloorKeys[0]) : null,
+      subStep: curStep.subStep,
     });
   }
   onSceneRebuild(renderAll);
@@ -175,6 +201,8 @@ function setLog(log: RunLog, data: RtData | null, logKey: string | null): void {
     stopPlay();
     currentLog = null;
     ghost = null;
+    chronicleSteps = [];
+    chronicleIdx = 0;
     renderAll();
     setStatus("재생 거부: " + bad);
     return;
@@ -193,16 +221,21 @@ function setLog(log: RunLog, data: RtData | null, logKey: string | null): void {
   }
   currentPhotoBase = "";
   currentNpcNames = {};
+  currentNpcs = {};
   if (data) {
     const set = data.sets[log.puzzle_set_id];
     if (set) {
       currentPhotoBase = "../data/" + log.puzzle_set_id + "/";
       currentNpcNames[set.npc.id] = set.npc.name;
+      currentNpcs[set.npc.id] = set.npc;
     } else {
       const sample = data.sample_sets[log.puzzle_set_id];
       if (sample) {
         currentPhotoBase = "testdata/sets/" + log.puzzle_set_id + "/";
-        if (sample.npc) currentNpcNames[sample.npc.id] = sample.npc.name;
+        if (sample.npc) {
+          currentNpcNames[sample.npc.id] = sample.npc.name;
+          currentNpcs[sample.npc.id] = sample.npc;
+        }
       }
     }
   }
@@ -227,15 +260,24 @@ function setLog(log: RunLog, data: RtData | null, logKey: string | null): void {
   }
   ghost = new Ghost(log, startCell);
   ghost.reset();
+  chronicleIdx = 0;
+  rebuildChronicleSteps();
   stopPlay();
   renderAll();
 }
 
 function stepOnce(): void {
   if (!currentLog || !ghost) return;
-  const e = ghost.next();
+  if (chronicleSteps.length === 0) rebuildChronicleSteps();
+  if (chronicleIdx + 1 >= chronicleSteps.length) {
+    stopPlay();
+    return;
+  }
+  chronicleIdx++;
+  const step = chronicleSteps[chronicleIdx];
+  ghost.seek(step.upto);
   renderAll();
-  if (e === null) stopPlay();
+  if (chronicleIdx >= chronicleSteps.length - 1) stopPlay();
 }
 
 function stopPlay(): void {
@@ -247,8 +289,9 @@ function stopPlay(): void {
 
 function startPlay(): void {
   if (!currentLog || !ghost || playTimer) return;
+  if (chronicleSteps.length === 0) rebuildChronicleSteps();
   playTimer = window.setInterval(() => {
-    if (!currentLog || !ghost || ghost.state().t >= currentLog.events.length) {
+    if (!currentLog || !ghost || chronicleIdx >= chronicleSteps.length - 1) {
       stopPlay();
       return;
     }
@@ -323,6 +366,7 @@ function startApp(): void {
     reset.addEventListener("click", () => {
       if (!currentLog || !ghost) return;
       ghost.reset();
+      chronicleIdx = 0;
       stopPlay();
       renderAll();
     });
@@ -334,6 +378,16 @@ function startApp(): void {
       loadPuzzleFile(puzzleFile.files[0]).then(
         (puzzle) => {
           filePuzzle = puzzle;
+          rebuildChronicleSteps();
+          if (ghost) {
+            const targetT = ghost.state().t;
+            for (let i = chronicleSteps.length - 1; i >= 0; i--) {
+              if (chronicleSteps[i].upto === targetT) {
+                chronicleIdx = i;
+                break;
+              }
+            }
+          }
           setStatus("퍼즐 데이터 선택됨.");
           renderAll();
         },

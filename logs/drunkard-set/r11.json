@@ -1,0 +1,78 @@
+{
+  "run_id": "r11",
+  "persona": {
+    "age": 17,
+    "job": "학생",
+    "vocab": "하",
+    "thinking": "문자 그대로 읽음"
+  },
+  "puzzle_set_id": "drunkard-set",
+  "model": "muse-spark-1.3",
+  "events": [
+    {
+      "t": 1,
+      "puzzle": 1,
+      "type": "move",
+      "value": "C4"
+    },
+    {
+      "t": 2,
+      "puzzle": 1,
+      "type": "view",
+      "value": "signboard@C4"
+    },
+    {
+      "t": 3,
+      "puzzle": 1,
+      "type": "npc_dialogue",
+      "npc": "drunkard"
+    },
+    {
+      "t": 4,
+      "puzzle": 1,
+      "type": "answer_submitted",
+      "value": "나선형계단앞",
+      "attempt": 1,
+      "correct": false,
+      "reason": "병에 빨간 글자만 보면 S P I R A L이다. 이건 빙글빙글 도는 거다. STEP은 계단이다. 그래서 빙글빙글 도는 계단 앞에 가야 한다."
+    },
+    {
+      "t": 5,
+      "puzzle": 1,
+      "type": "answer_submitted",
+      "value": "소용돌이계단",
+      "attempt": 2,
+      "correct": false,
+      "reason": "병이 돌고 돌고 있어서 소용돌이 같다. 그래서 소용돌이 계단으로 간다."
+    },
+    {
+      "t": 6,
+      "puzzle": 1,
+      "type": "hint_revealed",
+      "level": 1
+    },
+    {
+      "t": 7,
+      "puzzle": 1,
+      "type": "answer_submitted",
+      "value": "SPIRAL",
+      "attempt": 3,
+      "correct": true,
+      "reason": "1번 병 STEP부터 끝말로 이으면 순서가 되고 빨간 첫 글자만 읽으면 S P I R A L이 돼요. 노래도 돌고라서 맞아요."
+    },
+    {
+      "t": 8,
+      "puzzle": 1,
+      "type": "puzzle_ended",
+      "result": "solved_with_hint",
+      "attempts_used": 3
+    },
+    {
+      "t": 9,
+      "puzzle": 1,
+      "type": "end",
+      "outcome": "completed"
+    }
+  ],
+  "seed": 0
+}

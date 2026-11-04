@@ -11,13 +11,50 @@ interface PanelOptions {
   fileLog: boolean;
   photoBase: string;
   npcNames: { [id: string]: string };
+  npcs?: { [id: string]: NpcData };
   floor?: string | null;
+  subStep?: number;
 }
 
 function findObject(space: SpaceData | null, id: string): SpaceObject | null {
   if (!space) return null;
   for (const o of space.objects) {
     if (o.id === id) return o;
+  }
+  return null;
+}
+
+function findRoomName(space: SpaceData | null, cell: string): string | null {
+  if (!space || !space.rooms) return null;
+  let target: { col: number; row: number };
+  try {
+    target = parseCell(cell);
+  } catch {
+    return null;
+  }
+  const targetFloor = floorKeyOfCell(cell);
+  for (const room of space.rooms) {
+    if (!room.cells) continue;
+    const parts = room.cells.split(":");
+    const cStart = parts[0].trim();
+    const cEnd = (parts.length > 1 ? parts[1] : parts[0]).trim();
+    if (floorKeyOfCell(cStart) !== targetFloor) continue;
+    try {
+      const a = parseCell(cStart);
+      const b = parseCell(cEnd);
+      const minCol = Math.min(a.col, b.col);
+      const maxCol = Math.max(a.col, b.col);
+      const minRow = Math.min(a.row, b.row);
+      const maxRow = Math.max(a.row, b.row);
+      if (
+        target.col >= minCol && target.col <= maxCol &&
+        target.row >= minRow && target.row <= maxRow
+      ) {
+        return room.name;
+      }
+    } catch {
+      continue;
+    }
   }
   return null;
 }
@@ -67,6 +104,41 @@ function findEntry(
   return null;
 }
 
+function countEventSubSteps(
+  e: LogEvent, staticPuzzle: PuzzleData | FilePuzzleData | null
+): number {
+  if (e.type === "npc_dialogue") {
+    const entry = findEntry(staticPuzzle, e.puzzle);
+    const dLen =
+      entry && entry.dialogue && entry.dialogue.length > 0
+        ? entry.dialogue.length
+        : 1;
+    const hasQuiz =
+      entry && ((entry.image && entry.image.path) || entry.question) ? 1 : 0;
+    return 1 + dLen + hasQuiz;
+  }
+  if (e.type === "answer_submitted") {
+    const entry = findEntry(staticPuzzle, e.puzzle);
+    const hasReact =
+      entry && (e.correct ? entry.on_correct : entry.on_wrong) ? 1 : 0;
+    return 1 + hasReact;
+  }
+  return 1;
+}
+
+function buildChronicleSteps(
+  log: RunLog, staticPuzzle: PuzzleData | FilePuzzleData | null
+): ChronicleStep[] {
+  const steps: ChronicleStep[] = [{ upto: 0, subStep: 0 }];
+  for (let i = 0; i < log.events.length; i++) {
+    const totalSub = countEventSubSteps(log.events[i], staticPuzzle);
+    for (let s = 1; s <= totalSub; s++) {
+      steps.push({ upto: i + 1, subStep: s });
+    }
+  }
+  return steps;
+}
+
 function showFailedAnswer(
   feed: HTMLElement, n: number, opts: PanelOptions
 ): void {
@@ -97,14 +169,53 @@ function renderPanels(
   resultBox.textContent = "";
   const events = log.events.slice(0, upto);
   const staticPuzzle = opts.puzzle || opts.filePuzzle;
-  let dialogueIdx = 0;
-  let dialoguePuzzle = 0;
   const ended: PuzzleEndedEvent[] = [];
 
-  for (const e of events) {
-    if ((e.type === "move" || e.type === "view") && opts.floor) {
-      if (eventFloor(e) !== opts.floor) continue;
+  if (log.persona) {
+    panelText(
+      feed,
+      "참가자: " + log.persona.age + "세 " + log.persona.job +
+        " · 어휘 " + log.persona.vocab + " · " + log.persona.thinking,
+      "chron-intro"
+    );
+  }
+  if (staticPuzzle && staticPuzzle.start_instruction) {
+    panelText(
+      feed,
+      "시작 지시: " + staticPuzzle.start_instruction +
+        " (시작점 " + staticPuzzle.start_cell + ")",
+      "chron-intro"
+    );
+  }
+
+  let currentCell =
+    staticPuzzle && staticPuzzle.start_cell ? staticPuzzle.start_cell : "A1";
+
+  for (let idx = 0; idx < events.length; idx++) {
+    const e = events[idx];
+    const subLimit =
+      idx === events.length - 1 && opts.subStep !== undefined
+        ? opts.subStep
+        : Infinity;
+
+    if (e.type === "move") {
+      const m = e as MoveEvent;
+      const prevCell = currentCell;
+      currentCell = m.value;
+      if (opts.floor && eventFloor(e) !== opts.floor) continue;
+      const room = findRoomName(opts.space, m.value);
+      panelText(
+        feed,
+        "이동: " + prevCell + " → " + m.value + (room ? " (" + room + ")" : ""),
+        "chron-move"
+      );
+      continue;
     }
+
+    if (e.type === "view" && opts.floor && eventFloor(e) !== opts.floor) {
+      continue;
+    }
+
     if (e.type === "view") {
       const v = e as ViewEvent;
       const obj = findObject(opts.space, v.value);
@@ -113,28 +224,85 @@ function renderPanels(
         feed, file ? opts.photoBase + "photos/" + file : "",
         obj ? obj.label : "사물 사진"
       );
-      panelText(feed, "보기: " + v.value);
+      panelText(feed, "보기: " + v.value, "chron-view");
+      if (obj && (obj.label || obj.description)) {
+        panelText(
+          feed,
+          obj.label + (obj.description ? " — " + obj.description : ""),
+          "chron-desc"
+        );
+      }
     } else if (e.type === "npc_dialogue") {
       const n = e as NpcDialogueEvent;
-      const name = opts.npcNames[n.npc] || n.npc;
-      if (n.puzzle !== dialoguePuzzle) {
-        dialoguePuzzle = n.puzzle;
-        dialogueIdx = 0;
-      }
+      const npcObj = opts.npcs ? opts.npcs[n.npc] : undefined;
+      const name = (npcObj && npcObj.name) || opts.npcNames[n.npc] || n.npc;
       const entry = findEntry(staticPuzzle, n.puzzle);
-      const line = entry && entry.dialogue && entry.dialogue[dialogueIdx];
-      dialogueIdx++;
-      panelText(feed, name + ": " + (line ? line.text : "(대화)"));
+      const dLen =
+        entry && entry.dialogue && entry.dialogue.length > 0
+          ? entry.dialogue.length
+          : 1;
+      const hasQuiz = !!(
+        entry && ((entry.image && entry.image.path) || entry.question)
+      );
+      if (subLimit >= 1) {
+        if (npcObj && npcObj.image) {
+          panelPhoto(feed, opts.photoBase + npcObj.image, name);
+        }
+        panelText(feed, "등장: " + name, "chron-npc");
+      }
+      if (entry && entry.dialogue && entry.dialogue.length > 0) {
+        for (let k = 0; k < entry.dialogue.length; k++) {
+          if (subLimit >= 2 + k) {
+            panelText(feed, name + ": " + entry.dialogue[k].text, "chron-dialogue");
+          }
+        }
+      } else if (subLimit >= 2) {
+        panelText(feed, name + ": (대화)", "chron-dialogue");
+      }
+      if (hasQuiz && subLimit >= 2 + dLen && entry) {
+        if (entry.image && entry.image.path) {
+          panelPhoto(
+            feed,
+            opts.photoBase + entry.image.path,
+            "퍼즐 " + n.puzzle + " 퀴즈 그림"
+          );
+        }
+        if (entry.question) {
+          const meta = entry.answer_letter_count
+            ? " (" + entry.answer_letter_count + "글자" +
+              (entry.max_attempts ? " · 시도 " + entry.max_attempts + "회)" : ")")
+            : "";
+          panelText(feed, "문제: " + entry.question + meta, "chron-quiz");
+        }
+      }
     } else if (e.type === "answer_submitted") {
       const a = e as AnswerSubmittedEvent;
-      panelText(feed, "제출: " + a.value + (a.correct ? " (정답)" : " (오답)"));
-      const entry = findEntry(staticPuzzle, a.puzzle);
-      if (entry) {
-        if (a.correct && entry.on_correct) panelText(feed, entry.on_correct);
-        else if (!a.correct && entry.on_wrong) panelText(feed, entry.on_wrong);
+      if (subLimit >= 1) {
+        panelText(
+          feed,
+          "제출: " + a.value + (a.correct ? " (정답)" : " (오답)"),
+          a.correct ? "ans-ok" : "ans-wrong"
+        );
+      }
+      if (subLimit >= 2) {
+        const entry = findEntry(staticPuzzle, a.puzzle);
+        if (entry) {
+          if (a.correct && entry.on_correct) {
+            panelText(feed, entry.on_correct, "chron-dialogue");
+          } else if (!a.correct && entry.on_wrong) {
+            panelText(feed, entry.on_wrong, "chron-dialogue");
+          }
+        }
       }
     } else if (e.type === "hint_revealed") {
-      panelText(feed, "힌트 Lv." + (e as HintRevealedEvent).level);
+      panelText(feed, "힌트 Lv." + (e as HintRevealedEvent).level, "chron-hint");
+    } else if (e.type === "rejected") {
+      const r = e as RejectedEvent;
+      panelText(
+        feed,
+        "거절(" + (r.attempted_action || "행동") + "): " + r.error,
+        "chron-reject"
+      );
     } else if (e.type === "puzzle_ended") {
       const pe = e as PuzzleEndedEvent;
       ended.push(pe);
@@ -160,5 +328,11 @@ function renderPanels(
     if (outcome === "completed") {
       panelText(resultBox, "So long, and thanks for all the fish", "closing");
     }
+  }
+  if (
+    feed.lastElementChild &&
+    typeof feed.lastElementChild.scrollIntoView === "function"
+  ) {
+    feed.lastElementChild.scrollIntoView({ block: "nearest" });
   }
 }

@@ -1,0 +1,96 @@
+{
+  "run_id": "r12",
+  "persona": {
+    "age": 11,
+    "job": "학생",
+    "vocab": "상",
+    "thinking": "연상을 따라감"
+  },
+  "puzzle_set_id": "drunkard-set",
+  "model": "muse-spark-1.3",
+  "events": [
+    {
+      "t": 1,
+      "puzzle": 1,
+      "type": "move",
+      "value": "C4"
+    },
+    {
+      "t": 2,
+      "puzzle": 1,
+      "type": "view",
+      "value": "signboard@C4"
+    },
+    {
+      "t": 3,
+      "puzzle": 1,
+      "type": "npc_dialogue",
+      "npc": "drunkard"
+    },
+    {
+      "t": 4,
+      "puzzle": 1,
+      "type": "answer_submitted",
+      "value": "1층 나선계단",
+      "attempt": 1,
+      "correct": false,
+      "reason": "병 라벨 맨 앞 글자만 모아보니까 L I R P S A가 돼서 순서 바꾸면 SPIRAL이 돼! 술꾼이 다시 돌고 돌고 노래 부른 것도 빙글빙글 도는 나선 같고, STEP 병에 노란 1이 있어서 계단의 첫 번째 즉 1층이 떠올랐어. 그래서 나선+계단+1층을 합치면 1층 나선계단이야!"
+    },
+    {
+      "t": 5,
+      "puzzle": 1,
+      "type": "answer_submitted",
+      "value": "나선형계단앞",
+      "attempt": 2,
+      "correct": false,
+      "reason": "병 라벨 맨 앞 빨간 글자만 보면 L I R P S A인데 이걸 연상해서 섞어보니까 SPIRAL=소용돌이=빙글빙글 돌고가 돼서 아저씨가 부른 다시 돌고돌고랑 딱 맞고 가운데 병이 소용돌이 중심 같고 STEP에 노란 1이 있어서 계단의 첫 걸음 같아서 다음은 나선형 계단 앞인 것 같아"
+    },
+    {
+      "t": 6,
+      "puzzle": 1,
+      "type": "hint_revealed",
+      "level": 1
+    },
+    {
+      "t": 7,
+      "puzzle": 1,
+      "type": "answer_submitted",
+      "value": "나선형계단앞",
+      "attempt": 3,
+      "correct": false,
+      "reason": "STEP에 1이 있어서 거기서 시작해서 끝말잇기처럼 이어봤어. STEP은 P로 끝나서 PARI, PARI는 I로 끝나서 INFER, INFER는 R이라 ROSA, ROSA는 A라 ANGEL, ANGEL은 L이라 LIGHT! 빨간 첫글자만 모으면 S P I R A L 스파이럴이 돼. 스파이럴하면 소용돌이랑 달팽이랑 막 돌돌이가 생각나고 STEP은 계단 뜻이니까 합치면 나선형계단! 그래서 다음 장소는 나선형계단앞인 것 같아."
+    },
+    {
+      "t": 8,
+      "puzzle": 1,
+      "type": "answer_submitted",
+      "value": "나선형계단앞",
+      "attempt": 4,
+      "correct": false,
+      "reason": "STEP부터 끝글자랑 첫글자로 끝말잇기 하면 STEP-PARI-INFER-ROSA-ANGEL-LIGHT 순서가 돼. 빨간 첫글자만 모으면 S P I R A L, SPIRAL이 돼. SPIRAL은 빙글빙글 소용돌이니까 학교에서 빙글빙글 도는 계단, 나선형계단 앞일 것 같아."
+    },
+    {
+      "t": 9,
+      "puzzle": 1,
+      "type": "answer_submitted",
+      "value": "SPIRAL",
+      "attempt": 5,
+      "correct": true,
+      "reason": "STEP부터 끝말잇기로 이어봤어! STEP끝 P로 PARI, PARI끝 I로 INFER, INFER끝 R로 ROSA, ROSA끝 A로 ANGEL, ANGEL끝 L로 LIGHT가 돼서 돌고돌아! 빨간 첫글자만 모으면 S-P-I-R-A-L SPIRAL이라 노래 다시돌고랑 딱 맞아!"
+    },
+    {
+      "t": 10,
+      "puzzle": 1,
+      "type": "puzzle_ended",
+      "result": "solved_with_hint",
+      "attempts_used": 5
+    },
+    {
+      "t": 11,
+      "puzzle": 1,
+      "type": "end",
+      "outcome": "completed"
+    }
+  ],
+  "seed": 0
+}

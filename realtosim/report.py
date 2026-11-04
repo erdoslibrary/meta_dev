@@ -138,9 +138,14 @@ def render(set_id, puzzle_set, baseline, agg, verdict, analysis):
                  if r.get("ended") else "표본 없음")
         lines.append(f"- {n}번: 오프라인 {o.get('observed', '기록 없음')} "
                      f"({o.get('note', '')}) / 에이전트 {agent}")
+    sample_note = (
+        f"- 표본 수: 실행 {agg['runs']}회 (TRD §5·§7 기준 15회 충족)."
+        if agg["runs"] >= 15
+        else f"- 표본 수: 실행 {agg['runs']}회 (목표 5회, "
+             "2026-11-03 15회에서 하향. spec/TRD 기준과 다름)."
+    )
     lines += ["", "## 한계", "",
-              f"- 표본 수: 실행 {agg['runs']}회 (목표 5회, "
-              "2026-11-03 15회에서 하향. spec/TRD 기준과 다름).",
+              sample_note,
               "- 프롬프트 한계: 시스템 프롬프트는 고정 문구이며 5회 소진 규칙·"
               "상한을 모델에 알리지 않는다.",
               "- 사진 오인 가능: view 사진·퍼즐 그림 해석은 모델에 의존한다.",

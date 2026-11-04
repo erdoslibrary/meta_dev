@@ -85,13 +85,17 @@ class EmbedExposureTests(unittest.TestCase):
         self.assertTrue(all(texts), "on_correct stripped from payload")
 
     def test_drunkard_set_has_no_failed_answers(self):
-        # No real log ends failed, so no puzzle.json answer/next_instruction
-        # may appear anywhere under sets/drunkard-set.
+        # Decision E: shared puzzle has no answer/next_instruction; reveals[key]
+        # holds answers only for puzzles that ended failed in that log.
         section = self.payload["sets"]["drunkard-set"]
         keys = set()
-        for node in _walk(section):
+        for node in _walk(section["puzzle"]):
             keys |= {"answer", "next_instruction"} & set(node)
-        self.assertFalse(keys, f"non-failed answers in payload: {keys}")
+        self.assertFalse(keys, f"shared puzzle answers in payload: {keys}")
+        reveals = section.get("reveals", {})
+        for key, log in section["logs"].items():
+            failed = {str(n) for n in self.embed.failed_numbers(log)}
+            self.assertEqual(set(reveals.get(key, {})), failed)
 
     def test_refusal_samples_included_with_defects(self):
         refusal = self.payload.get("refusal") or {}

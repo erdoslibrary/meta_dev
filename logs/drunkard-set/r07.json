@@ -1,0 +1,96 @@
+{
+  "run_id": "r07",
+  "persona": {
+    "age": 22,
+    "job": "디자이너",
+    "vocab": "중",
+    "thinking": "문자 그대로 읽음"
+  },
+  "puzzle_set_id": "drunkard-set",
+  "model": "muse-spark-1.3",
+  "events": [
+    {
+      "t": 1,
+      "puzzle": 1,
+      "type": "move",
+      "value": "C4"
+    },
+    {
+      "t": 2,
+      "puzzle": 1,
+      "type": "view",
+      "value": "signboard@C4"
+    },
+    {
+      "t": 3,
+      "puzzle": 1,
+      "type": "npc_dialogue",
+      "npc": "drunkard"
+    },
+    {
+      "t": 4,
+      "puzzle": 1,
+      "type": "answer_submitted",
+      "value": "나선형계단앞",
+      "attempt": 1,
+      "correct": false,
+      "reason": "병 라벨을 문자 그대로 읽으면 LIGHT, INFER, ROSA, PARI, STEP, ANGEL이다. 빨간 첫 글자만 분리하면 L, I, R, P, S, A이다. 노래가 다시 돌고라고 해서 돌려서 맞추면 SPIRAL이 된다. SPIRAL은 나선형이라는 뜻이라 다음 장소는 나선형계단앞이다."
+    },
+    {
+      "t": 5,
+      "puzzle": 1,
+      "type": "answer_submitted",
+      "value": "나선형계단앞",
+      "attempt": 2,
+      "correct": false,
+      "reason": "병 라벨 첫 글자 빨간색만 보면 L I R P S A인데 돌고 돈다는 말처럼 돌려서 맞추면 SPIRAL이 돼. SPIRAL은 나선형이고 STEP이 계단 같아서 나선형 계단 앞으로 가야 한다고 생각했어."
+    },
+    {
+      "t": 6,
+      "puzzle": 1,
+      "type": "hint_revealed",
+      "level": 1
+    },
+    {
+      "t": 7,
+      "puzzle": 1,
+      "type": "answer_submitted",
+      "value": "나선형계단앞",
+      "attempt": 3,
+      "correct": false,
+      "reason": "STEP병이 시작점이고 끝글자와 첫글자로 이어지면 STEP-PARI-INFER-ROSA-ANGEL-LIGHT 순서가 되고 빨간 첫글자만 읽으면 SPIRAL이 된다. SPIRAL은 나선형이고 STEP은 계단이므로 다음 장소는 나선형계단앞이다."
+    },
+    {
+      "t": 8,
+      "puzzle": 1,
+      "type": "answer_submitted",
+      "value": "소용돌이계단",
+      "attempt": 4,
+      "correct": false,
+      "reason": "1번 병 STEP부터 끝글자와 첫글자로 이으니 STEP-PARI-INFER-ROSA-ANGEL-LIGHT 순서가 되고 빨간 첫글자만 읽으면 SPIRAL이라서 소용돌이계단으로 답함"
+    },
+    {
+      "t": 9,
+      "puzzle": 1,
+      "type": "answer_submitted",
+      "value": "SPIRAL",
+      "attempt": 5,
+      "correct": true,
+      "reason": "숫자 1이 있는 STEP부터 끝글자와 다음 병 첫글자를 연결하면 STEP-PARI-INFER-ROSA-ANGEL-LIGHT 순서가 되고 빨간 첫글자만 순서대로 읽으면 S P I R A L로 SPIRAL이 되기 때문에 답은 SPIRAL이다."
+    },
+    {
+      "t": 10,
+      "puzzle": 1,
+      "type": "puzzle_ended",
+      "result": "solved_with_hint",
+      "attempts_used": 5
+    },
+    {
+      "t": 11,
+      "puzzle": 1,
+      "type": "end",
+      "outcome": "completed"
+    }
+  ],
+  "seed": 0
+}
