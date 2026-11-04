@@ -9,7 +9,7 @@ let currentPhotoBase = "";
 let currentNpcNames: { [id: string]: string } = {};
 let logFloorKeys: string[] = [];
 let activeFloor: string | null = null;
-let stepIndex = 0;
+let ghost: Ghost | null = null;
 let playTimer = 0;
 let contentGroup: THREE.Group | null = null;
 
@@ -60,11 +60,20 @@ function renderAll(): void {
     scene.remove(contentGroup);
     contentGroup = null;
   }
-  if (!currentLog) return;
+  if (!currentLog || !ghost) {
+    const info0 = el("trail-info");
+    if (info0) info0.textContent = "";
+    const feed0 = el("ghost");
+    if (feed0) feed0.textContent = "";
+    const resultBox0 = el("result");
+    if (resultBox0) resultBox0.textContent = "";
+    return;
+  }
   contentGroup = new THREE.Group();
   scene.add(contentGroup);
 
   const log = currentLog;
+  const st = ghost.state();
   const space = currentStatic ? currentStatic.space : null;
   const multi = logFloorKeys.length > 1;
   const activeKey = multi ? (activeFloor || logFloorKeys[0]) : logFloorKeys[0];
@@ -74,7 +83,7 @@ function renderAll(): void {
   setSceneExtent(columns, rows);
   const visible = multi ? activeFloor : null;
   if (space) {
-    const explored = stepIndex > 0;
+    const explored = st.t > 0;
     const targetFloor = activeFloorObj || space.floors[0];
     for (const floor of space.floors) {
       const key = floor.id || "";
@@ -86,11 +95,11 @@ function renderAll(): void {
   const start = currentStatic ? currentStatic.puzzle.start_cell : "A1";
   const onFloor = (cell: string): boolean =>
     !multi || floorKeyOfCell(cell) === (visible || logFloorKeys[0]);
-  const moves = moveCells(log, stepIndex);
+  const moves = moveCells(log, st.t);
   const seq = [start].concat(moves);
   const cells = seq.filter(onFloor);
   const pts = cells.map((c) => cellToXY(c, columns, rows));
-  const tail = logOutcome(log, stepIndex);
+  const tail = logOutcome(log, st.t);
   const redSeal: number[] = [];
   const filteredIndex = (u: number): number | null => {
     if (!onFloor(seq[u])) return null;
@@ -104,7 +113,7 @@ function renderAll(): void {
   }
 
   // Mark puzzle results at the cell where each puzzle ended.
-  const events = log.events.slice(0, stepIndex);
+  const events = log.events.slice(0, st.t);
   let mi = 0;
   const marks: { pos: TrailPoint; result: "solved_by_dialogue" | "solved_with_hint" | "failed" }[] = [];
   for (const e of events) {
@@ -138,15 +147,15 @@ function renderAll(): void {
     setStatus("끊김(" + tail.outcome + "): 끊긴 지점에서 멈춤. 끝까지 재생되지 않음.");
   } else if (tail && tail.type === "puzzle_ended" && tail.result === "failed") {
     setStatus("실패 구간: Seal Red 표시.");
-  } else if (stepIndex >= log.events.length) {
+  } else if (st.t >= log.events.length) {
     setStatus("재생 완료.");
   } else {
-    setStatus("재생 중: " + stepIndex + "/" + log.events.length);
+    setStatus("재생 중: " + st.t + "/" + log.events.length);
   }
   const feed = el("ghost");
   const resultBox = el("result");
   if (feed && resultBox) {
-    renderPanels(feed, resultBox, log, stepIndex, {
+    renderPanels(feed, resultBox, log, st.t, {
       space: currentStatic ? currentStatic.space : null,
       puzzle: currentStatic ? currentStatic.puzzle : null,
       filePuzzle,
@@ -163,6 +172,10 @@ function renderAll(): void {
 function setLog(log: RunLog, data: RtData | null, logKey: string | null): void {
   const bad = validateLogForPlayback(log);
   if (bad) {
+    stopPlay();
+    currentLog = null;
+    ghost = null;
+    renderAll();
     setStatus("재생 거부: " + bad);
     return;
   }
@@ -212,18 +225,17 @@ function setLog(log: RunLog, data: RtData | null, logKey: string | null): void {
       floorSel.style.display = "none";
     }
   }
-  stepIndex = 0;
+  ghost = new Ghost(log, startCell);
+  ghost.reset();
   stopPlay();
   renderAll();
 }
 
 function stepOnce(): void {
-  if (!currentLog) return;
-  if (stepIndex < currentLog.events.length) {
-    stepIndex++;
-    renderAll();
-  }
-  if (currentLog && stepIndex >= currentLog.events.length) stopPlay();
+  if (!currentLog || !ghost) return;
+  const e = ghost.next();
+  renderAll();
+  if (e === null) stopPlay();
 }
 
 function stopPlay(): void {
@@ -234,9 +246,9 @@ function stopPlay(): void {
 }
 
 function startPlay(): void {
-  if (!currentLog || playTimer) return;
+  if (!currentLog || !ghost || playTimer) return;
   playTimer = window.setInterval(() => {
-    if (!currentLog || stepIndex >= currentLog.events.length) {
+    if (!currentLog || !ghost || ghost.state().t >= currentLog.events.length) {
       stopPlay();
       return;
     }
@@ -309,8 +321,8 @@ function startApp(): void {
   const reset = el("reset");
   if (reset) {
     reset.addEventListener("click", () => {
-      if (!currentLog) return;
-      stepIndex = 0;
+      if (!currentLog || !ghost) return;
+      ghost.reset();
       stopPlay();
       renderAll();
     });

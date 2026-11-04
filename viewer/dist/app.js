@@ -95,6 +95,8 @@ class Ghost {
         this.opened = [];
         this.submission = null;
         this.result = null;
+        this.end = null;
+        this.lastPuzzle = null;
         this.log = log;
         this.startCell = startCell;
         this.cell = startCell;
@@ -105,12 +107,18 @@ class Ghost {
         this.opened = [];
         this.submission = null;
         this.result = null;
+        this.end = null;
+        this.lastPuzzle = null;
     }
     /** Apply the next event; null when the log is exhausted. */
     next() {
         if (this.idx >= this.log.events.length)
             return null;
         const e = this.log.events[this.idx];
+        if (this.lastPuzzle !== null && e.puzzle !== this.lastPuzzle) {
+            this.submission = null;
+            this.result = null;
+        }
         this.idx++;
         if (e.type === "move") {
             this.cell = e.value;
@@ -127,19 +135,39 @@ class Ghost {
         else if (e.type === "puzzle_ended") {
             this.result = e.result;
         }
+        else if (e.type === "end") {
+            this.end = e.outcome;
+        }
+        this.lastPuzzle = e.puzzle;
         return e;
+    }
+    seek(n) {
+        this.reset();
+        if (n <= 0)
+            return;
+        for (let i = 0; i < n; i++) {
+            if (this.next() === null)
+                break;
+        }
     }
     state() {
         const events = this.log.events;
-        const cur = events[Math.min(this.idx, events.length - 1)];
         const last = events[events.length - 1];
+        let puzzle = 1;
+        if (this.idx > 0) {
+            puzzle = events[this.idx - 1].puzzle;
+        }
+        else if (events.length > 0) {
+            puzzle = events[0].puzzle;
+        }
         return {
             t: this.idx,
-            puzzle: cur ? cur.puzzle : 1,
+            puzzle: puzzle,
             cell: this.cell,
             opened: this.opened.slice(),
             submission: this.submission,
             result: this.result,
+            end: this.end,
             done: this.idx >= events.length && !!last && last.type === "end",
         };
     }
@@ -265,7 +293,7 @@ let currentPhotoBase = "";
 let currentNpcNames = {};
 let logFloorKeys = [];
 let activeFloor = null;
-let stepIndex = 0;
+let ghost = null;
 let playTimer = 0;
 let contentGroup = null;
 function el(id) {
@@ -315,11 +343,22 @@ function renderAll() {
         scene.remove(contentGroup);
         contentGroup = null;
     }
-    if (!currentLog)
+    if (!currentLog || !ghost) {
+        const info0 = el("trail-info");
+        if (info0)
+            info0.textContent = "";
+        const feed0 = el("ghost");
+        if (feed0)
+            feed0.textContent = "";
+        const resultBox0 = el("result");
+        if (resultBox0)
+            resultBox0.textContent = "";
         return;
+    }
     contentGroup = new THREE.Group();
     scene.add(contentGroup);
     const log = currentLog;
+    const st = ghost.state();
     const space = currentStatic ? currentStatic.space : null;
     const multi = logFloorKeys.length > 1;
     const activeKey = multi ? (activeFloor || logFloorKeys[0]) : logFloorKeys[0];
@@ -329,7 +368,7 @@ function renderAll() {
     setSceneExtent(columns, rows);
     const visible = multi ? activeFloor : null;
     if (space) {
-        const explored = stepIndex > 0;
+        const explored = st.t > 0;
         const targetFloor = activeFloorObj || space.floors[0];
         for (const floor of space.floors) {
             const key = floor.id || "";
@@ -342,11 +381,11 @@ function renderAll() {
     }
     const start = currentStatic ? currentStatic.puzzle.start_cell : "A1";
     const onFloor = (cell) => !multi || floorKeyOfCell(cell) === (visible || logFloorKeys[0]);
-    const moves = moveCells(log, stepIndex);
+    const moves = moveCells(log, st.t);
     const seq = [start].concat(moves);
     const cells = seq.filter(onFloor);
     const pts = cells.map((c) => cellToXY(c, columns, rows));
-    const tail = logOutcome(log, stepIndex);
+    const tail = logOutcome(log, st.t);
     const redSeal = [];
     const filteredIndex = (u) => {
         if (!onFloor(seq[u]))
@@ -364,7 +403,7 @@ function renderAll() {
             redSeal.push(0);
     }
     // Mark puzzle results at the cell where each puzzle ended.
-    const events = log.events.slice(0, stepIndex);
+    const events = log.events.slice(0, st.t);
     let mi = 0;
     const marks = [];
     for (const e of events) {
@@ -403,16 +442,16 @@ function renderAll() {
     else if (tail && tail.type === "puzzle_ended" && tail.result === "failed") {
         setStatus("실패 구간: Seal Red 표시.");
     }
-    else if (stepIndex >= log.events.length) {
+    else if (st.t >= log.events.length) {
         setStatus("재생 완료.");
     }
     else {
-        setStatus("재생 중: " + stepIndex + "/" + log.events.length);
+        setStatus("재생 중: " + st.t + "/" + log.events.length);
     }
     const feed = el("ghost");
     const resultBox = el("result");
     if (feed && resultBox) {
-        renderPanels(feed, resultBox, log, stepIndex, {
+        renderPanels(feed, resultBox, log, st.t, {
             space: currentStatic ? currentStatic.space : null,
             puzzle: currentStatic ? currentStatic.puzzle : null,
             filePuzzle,
@@ -428,6 +467,10 @@ function renderAll() {
 function setLog(log, data, logKey) {
     const bad = validateLogForPlayback(log);
     if (bad) {
+        stopPlay();
+        currentLog = null;
+        ghost = null;
+        renderAll();
         setStatus("재생 거부: " + bad);
         return;
     }
@@ -482,18 +525,17 @@ function setLog(log, data, logKey) {
             floorSel.style.display = "none";
         }
     }
-    stepIndex = 0;
+    ghost = new Ghost(log, startCell);
+    ghost.reset();
     stopPlay();
     renderAll();
 }
 function stepOnce() {
-    if (!currentLog)
+    if (!currentLog || !ghost)
         return;
-    if (stepIndex < currentLog.events.length) {
-        stepIndex++;
-        renderAll();
-    }
-    if (currentLog && stepIndex >= currentLog.events.length)
+    const e = ghost.next();
+    renderAll();
+    if (e === null)
         stopPlay();
 }
 function stopPlay() {
@@ -503,10 +545,10 @@ function stopPlay() {
     }
 }
 function startPlay() {
-    if (!currentLog || playTimer)
+    if (!currentLog || !ghost || playTimer)
         return;
     playTimer = window.setInterval(() => {
-        if (!currentLog || stepIndex >= currentLog.events.length) {
+        if (!currentLog || !ghost || ghost.state().t >= currentLog.events.length) {
             stopPlay();
             return;
         }
@@ -584,9 +626,9 @@ function startApp() {
     const reset = el("reset");
     if (reset) {
         reset.addEventListener("click", () => {
-            if (!currentLog)
+            if (!currentLog || !ghost)
                 return;
-            stepIndex = 0;
+            ghost.reset();
             stopPlay();
             renderAll();
         });

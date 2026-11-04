@@ -15,6 +15,7 @@
 **변경 사유 (2026-11-04)**: 결정 E 키 규칙을 반영. T006·T019를 reveals 기준으로 고친다(세트 공용 puzzle 무정답, 정답은 연결된 세트의 reveals에서 읽음). reveals 키는 실로그 상대 경로·`testdata/<이름>`·`refusal/<이름>`, 퍼즐 번호 키는 문자열.
 **변경 사유 (2026-11-04)**: 결정 E 반영. T007 puzzle 타입에서 `answer`·`next_instruction`을 빼고 `reveals` 타입(퍼즐 번호 문자열 키, `next_instruction` null 생략)을 넣는다.
 **변경 사유 (2026-11-04)**: 결정 B 파일 입력 경로 누락 보완. T007에 파일 입력 원본 `puzzle.json`용 타입(`FilePuzzleEntry`, 실패 퍼즐 `answer`·`next_instruction` 포함, `next_instruction` null 허용)을 내장 payload용 `PuzzleEntry`(정답 없음)와 구분해 둔다.
+**변경 사유 (2026-11-04)**: T018 완료 반영. `ghost.ts` 재생 상태 모델 계약 맞춤(end 필드, 퍼즐 번호, 전환 초기화, seek) 후 `tsc --noEmit` 0·`app.js` 빌드·`unittest` 83 통과 확인.
 
 ## Format: `[ID] [P?] [Story] Description`
 
@@ -88,7 +89,7 @@
 - [X] T040 [P] [US2] Create the `failed.json` matching sample-set static data in `viewer/testdata/sets/<puzzle_set_id>/` (linked by the log's `puzzle_set_id`); put 2 puzzles in `sets/viewer-failed/puzzle.json` (no. 1 `failed` with non-`null` `next_instruction`, no. 2 `failed` with `null` `next_instruction`); the sample log's cells and objects must match that set's static data
 - [X] T046 [US2] Fix `viewer/testdata/failed.json` only: set `puzzle_set_id` to `viewer-failed` and add puzzle 2 events; after the fix re-run `embed.py` and T036
 - [X] T044 [US2] Wire `viewer/src/dataload.ts` to use the `failed.json` sample-set static data embedded in `window.RT_DATA` (근거: main.ts staticFor·setLog가 내장 sample_sets에서 정적 데이터·reveals를 읽음)
-- [ ] T018 [US2] Create `viewer/src/ghost.ts` implementing ordered playback state (current `t`, puzzle number, cell, opened-object set, submission result, end result) over start → `move` → `view` → `npc_dialogue` → `answer_submitted` → (`hint_revealed` | `puzzle_ended`) → next puzzle or `end`
+- [X] T018 [US2] Create `viewer/src/ghost.ts` implementing ordered playback state (current `t`, puzzle number, cell, opened-object set, submission result, end result) over start → `move` → `view` → `npc_dialogue` → `answer_submitted` → (`hint_revealed` | `puzzle_ended`) → next puzzle or `end`
 - [X] T019 [US2] Create `viewer/src/panels.ts` showing at each `view` point the object photo (`<img>`) and `npc_dialogue`, per-puzzle `puzzle_ended.result`, `on_wrong` in order and `on_correct` right after a correct submission (next place and answer strings in the line shown verbatim), `answer_submitted.value` as submitted verbatim, `hint_revealed` level only (no hint body), and the matching `reveals` entry (`{answer, next_instruction}` read from the linked set's `reveals`) exactly once right after `puzzle_ended(failed)` (`null` shows no next-place phrase; solved puzzles show no `next_instruction`, their next place comes via `on_correct`); file-input `failed` answers and `next_instruction` only when the log and `puzzle.json` are both selected, else "정답 데이터 없음" only with no next-place phrase; never showing `next_object_id` (full ban), photo paths/hashes, unreleased hints, `reason`, or answers of non-`failed` puzzles (FR-005, decision A/B); Seal Red goes on the `퍼즐 N 결과: failed` line, the `정답: …` line stays default ink
 - [ ] T020 [US2] Extend `viewer/src/main.ts` with US2 ghost wiring driving `ghost.ts` + `panels.ts` over the US1 trajectory
 - [X] T021 [US2] Extend `viewer/index.html` with US2 ghost controls (log + `puzzle.json` file selectors, decision B) and result display regions
