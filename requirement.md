@@ -2,6 +2,7 @@
 
 - 용도: `speckit-specify`에 그대로 붙여 넣는 한 글.
 - 원본: `docs/PRD.md`, `docs/TRD.md`. 이 파일이 speckit 입력 기준이다.
+- 변경 사유(2026-11-05): `docs/PRD.md`·`docs/TRD.md`는 2026-11-05 삭제했고 `backup/pre-docs-cleanup` 브랜치에 보존한다.
 - 범위: 갈래 1(퍼즐 데이터 → 검증 → 오라클 → 에이전트 실행 → 로그 → 보고서) 먼저. 갈래 1 specify 완료.
 - 갈래 2(지도, 고스트, 층 전환, 주문·잉크 연출, 뷰어)는 `specs/002-map-ghost-viewer/spec.md`가 specify 입력이다.
 

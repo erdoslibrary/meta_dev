@@ -32,7 +32,8 @@
 ### IV. Spec-Driven Development 워크플로우
 
 - 새 Phase·기능 요청 시 바로 코드 작성 MUST NOT. `specs/<id>/`에 spec.md → plan.md → tasks.md → implement 순서 MUST.
-- 범위 기준(SSOT)은 저장소 루트 `requirement.md` 최우선, 원본은 `docs/PRD.md`·`docs/TRD.md` MUST. 워크플로우 세부 동작은 `.specify/workflows/speckit/`을 따른다.
+- 범위 기준(SSOT)은 저장소 루트 `requirement.md` 최우선, 원본은 `docs/PRD.md`·`docs/TRD.md` MUST.
+- 변경 사유(2026-11-05, v1.3.1): `docs/PRD.md`·`docs/TRD.md`는 2026-11-05 삭제했고 `backup/pre-docs-cleanup` 브랜치에 보존한다. 위 원본 언급은 그 브랜치의 문서를 가리킨다. 워크플로우 세부 동작은 `.specify/workflows/speckit/`을 따른다.
 - `/speckit-implement` 전 `tasks.md` 범위를 요청과 대조하고, 요청이 제외·다음 슬라이스로 적혀 있으면 `tasks` 재생성 여부를 먼저 묻 MUST.
 - 본 헌법 개정 없이 `docs/`·스키마 수정 MUST NOT.
 
@@ -43,4 +44,4 @@
 - 버전 규칙: MAJOR는 원칙 삭제·재정의 등 호환 불가 변경, MINOR은 원칙·섹션 추가나 실질 확장, PATCH는 문구·오탈자 등 비의미 정정.
 - 모든 변경은 준수 확인을 거친다: 테스트 게이트 통과, 원칙 II 허용 목록 외 신규 의존성 없음, 비밀·노출 금지 필드 없음.
 
-**Version**: 1.3.0 | **Ratified**: 2026-11-03 | **Last Amended**: 2026-11-05
+**Version**: 1.3.1 | **Ratified**: 2026-11-03 | **Last Amended**: 2026-11-05

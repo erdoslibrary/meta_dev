@@ -10,6 +10,4 @@
 
 ## 🔗 Related Specs
 - `specs/`
-- `docs/PRD.md`
-- `docs/TRD.md`
 - `requirement.md`
