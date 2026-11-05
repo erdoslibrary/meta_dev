@@ -18,7 +18,14 @@
 
 ### 1. Archive 뷰어 열기 (빌드 불필요)
 
-`viewer/dist/`가 커밋돼 있습니다. 브라우저로 `viewer/index.html`을 엽니다. URL 끝에 `?lang=ko`를 붙이면 한국어로 나옵니다.
+`viewer/dist/`가 커밋돼 있습니다. 번들러 없이 `file://`로 바로 열립니다.
+
+- **브라우저로 직접 열기 (가장 간단)**: 파일 탐색기에서 `viewer/index.html`을 더블클릭하거나 브라우저 창으로 드래그합니다. URL 끝에 `?lang=ko`를 붙이면 한국어로 나옵니다.
+- **로컬 웹 서버로 열기 (CLI / 원격 환경)**:
+  ```bash
+  python3 -m http.server 8000
+  ```
+  서버 실행 후 브라우저에서 `http://localhost:8000/viewer/?lang=ko` 에 접속합니다.
 
 ### 2. 설치와 테스트 실행
 

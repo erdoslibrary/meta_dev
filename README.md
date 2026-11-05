@@ -18,7 +18,14 @@ Steps 1–3 and 5 work without an API key or a `.env` file. Only step 4 needs a 
 
 ### 1. Open the Archive viewer (no build needed)
 
-`viewer/dist/` is committed. Open `viewer/index.html` in a browser. Add `?lang=ko` to the URL for Korean.
+`viewer/dist/` is committed. It opens directly via `file://` without a bundler.
+
+- **Directly in browser (easiest)**: Double-click `viewer/index.html` in your file manager or drag it into any browser. Add `?lang=ko` to the URL for Korean.
+- **Via local HTTP server (CLI / remote environments)**:
+  ```bash
+  python3 -m http.server 8000
+  ```
+  After starting the server, open `http://localhost:8000/viewer/` in your browser (add `?lang=ko` for Korean).
 
 ### 2. Install and run the tests
 
