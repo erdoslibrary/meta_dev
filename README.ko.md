@@ -1,8 +1,13 @@
-# Real-to-Sim Archive ![Status](https://img.shields.io/badge/status-hackathon%20prototype-orange)
+<!-- 2026-11-05 변경 사유: GitHub Actions(CI + Pages) 배포 전환을 README에 반영. -->
+# Real-to-Sim Archive ![Status](https://img.shields.io/badge/status-hackathon%20prototype-orange) [![Archive CI + Pages](https://github.com/erdoslibrary/meta_hackathon/actions/workflows/pages.yml/badge.svg)](https://github.com/erdoslibrary/meta_hackathon/actions/workflows/pages.yml)
 
 [English](README.md) | **한국어**
 
 > 로봇 분야의 real-to-sim 방식을 실제 건물에 놓인 퍼즐에 적용해 본 작은 실험입니다.
+
+[![데모 영상](https://img.youtube.com/vi/zO1df4XQ8yg/hqdefault.jpg)](https://youtu.be/zO1df4XQ8yg)
+
+▶ [YouTube에서 영상 보기 (영문 자막 있음)](https://youtu.be/zO1df4XQ8yg)
 
 ### 왜 만들었나
 
@@ -19,6 +24,8 @@
 ### 1. Archive 뷰어 열기 (빌드 불필요)
 
 `viewer/dist/`가 커밋돼 있습니다. 번들러 없이 `file://`로 바로 열립니다.
+
+**온라인 데모:** [https://erdoslibrary.github.io/meta_hackathon/viewer/](https://erdoslibrary.github.io/meta_hackathon/viewer/) (한국어는 [`?lang=ko`](https://erdoslibrary.github.io/meta_hackathon/viewer/?lang=ko)). `main`에 push할 때마다 GitHub Actions([pages.yml](.github/workflows/pages.yml))가 테스트를 돌리고 뷰어를 다시 빌드·배포합니다.
 
 - **브라우저로 직접 열기 (가장 간단)**: 파일 탐색기에서 `viewer/index.html`을 더블클릭하거나 브라우저 창으로 드래그합니다. URL 끝에 `?lang=ko`를 붙이면 한국어로 나옵니다.
 - **로컬 웹 서버로 열기 (CLI / 원격 환경)**:
@@ -66,6 +73,8 @@ cd viewer && npm ci && cd ..                  # three 0.185.0, typescript 5.9.3,
 .venv/bin/python viewer/tools/embed.py        # 로그 + 데이터 -> viewer/dist/data.js
 viewer/node_modules/.bin/tsc -p viewer        # src/*.ts -> viewer/dist/app.js
 ```
+
+`main`에 push하면 CI가 같은 과정을 돌리고 온라인 데모에 배포합니다. 로컬 빌드는 오프라인으로 작업할 때만 하세요.
 
 ---
 

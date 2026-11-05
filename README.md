@@ -1,8 +1,13 @@
-# Real-to-Sim Archive ![Status](https://img.shields.io/badge/status-hackathon%20prototype-orange)
+<!-- 2026-11-05 변경 사유: GitHub Actions(CI + Pages) 배포 전환을 README에 반영. -->
+# Real-to-Sim Archive ![Status](https://img.shields.io/badge/status-hackathon%20prototype-orange) [![Archive CI + Pages](https://github.com/erdoslibrary/meta_hackathon/actions/workflows/pages.yml/badge.svg)](https://github.com/erdoslibrary/meta_hackathon/actions/workflows/pages.yml)
 
 **English** | [한국어](README.ko.md)
 
 > A small experiment that applies the robotics real-to-sim idea to a puzzle in a real building.
+
+[![Demo video](https://img.youtube.com/vi/zO1df4XQ8yg/hqdefault.jpg)](https://youtu.be/zO1df4XQ8yg)
+
+▶ [Watch on YouTube (English subtitles)](https://youtu.be/zO1df4XQ8yg)
 
 ### Why we built this
 
@@ -19,6 +24,8 @@ Steps 1–3 and 5 work without an API key or a `.env` file. Only step 4 needs a 
 ### 1. Open the Archive viewer (no build needed)
 
 `viewer/dist/` is committed. It opens directly via `file://` without a bundler.
+
+**Live demo:** [https://erdoslibrary.github.io/meta_hackathon/viewer/](https://erdoslibrary.github.io/meta_hackathon/viewer/) (add `?lang=ko` for Korean). Every push to `main` runs the tests and rebuilds + redeploys the viewer via GitHub Actions ([pages.yml](.github/workflows/pages.yml)).
 
 - **Directly in browser (easiest)**: Double-click `viewer/index.html` in your file manager or drag it into any browser. Add `?lang=ko` to the URL for Korean.
 - **Via local HTTP server (CLI / remote environments)**:
@@ -66,6 +73,8 @@ cd viewer && npm ci && cd ..                  # three 0.185.0, typescript 5.9.3,
 .venv/bin/python viewer/tools/embed.py        # logs + data -> viewer/dist/data.js
 viewer/node_modules/.bin/tsc -p viewer        # src/*.ts -> viewer/dist/app.js
 ```
+
+Pushing to `main` runs the same steps in CI and deploys to the live demo above. Rebuild locally only when iterating offline.
 
 ---
 
