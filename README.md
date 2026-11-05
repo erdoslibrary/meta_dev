@@ -129,11 +129,20 @@ flowchart LR
 
 ---
 
-## Credits and notices
+## Tech stack
+
+| Part | Stack | Role |
+| --- | --- | --- |
+| Studio | Python 3 (tested on 3.13), standard library | Engine, validation, agent runs, report |
+| Data contracts | JSON Schema draft 2020-12, `jsonschema` 4.26.0 | Validates puzzle, space and log files |
+| Agents | Muse Spark (`muse-spark-1.3`), `httpx` 0.28.1 | `/responses` for answers, `/files` for puzzle images |
+| Archive viewer | TypeScript 5.9.3, [three.js](https://threejs.org/) 0.185.0 (vendored) | Single `tsc` output, no bundler, opens from `file://` |
+| Build and tests | Node 24 (viewer build only), Python `unittest` | |
+
+## Credits
 
 - "Don't Panic" (landing screen) and "So long, and thanks for all the fish" (end of a completed replay and of this README) are short quotes from Douglas Adams, *The Hitchhiker's Guide to the Galaxy*, used as a homage. No other text, cover art or design from the book is used.
 - `meta-models/legal-agent-workshop` was used as a reference for ideas (Files API with SHA-256 caching, validation outside the code). No code was copied.
-- Built with [three.js](https://threejs.org/), [TypeScript](https://www.typescriptlang.org/) and [jsonschema](https://python-jsonschema.readthedocs.io/).
 - The puzzle picture (`bottle_quiz.jpg`) was generated with ChatGPT.
 
 ## License

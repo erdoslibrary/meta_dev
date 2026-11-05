@@ -129,11 +129,20 @@ flowchart LR
 
 ---
 
-## 출처와 고지
+## 기술 스택
+
+| 구분 | 스택 | 역할 |
+| --- | --- | --- |
+| Studio | Python 3(3.13에서 확인), 표준 라이브러리 | 엔진, 검증, 에이전트 실행, 보고서 |
+| 데이터 계약 | JSON Schema draft 2020-12, `jsonschema` 4.26.0 | 퍼즐, 공간, 로그 파일 검증 |
+| 에이전트 | Muse Spark(`muse-spark-1.3`), `httpx` 0.28.1 | `/responses`로 답 생성, `/files`로 퍼즐 그림 업로드 |
+| Archive 뷰어 | TypeScript 5.9.3, [three.js](https://threejs.org/) 0.185.0(저장소에 포함) | `tsc` 단일 출력, 번들러 없음, `file://`로 열림 |
+| 빌드와 테스트 | Node 24(뷰어 빌드에만), Python `unittest` | |
+
+## 출처
 
 - "Don't Panic"(랜딩 화면)과 "So long, and thanks for all the fish"(완주한 재생 끝과 이 README 끝)는 더글러스 애덤스의 《은하수를 여행하는 히치하이커를 위한 안내서》에서 짧은 문구만 오마주로 가져왔습니다. 책의 다른 본문, 표지, 디자인은 쓰지 않았습니다.
 - `meta-models/legal-agent-workshop`은 아이디어(Files API와 SHA-256 캐시, 코드 밖 검증)만 참고했습니다. 코드는 가져오지 않았습니다.
-- [three.js](https://threejs.org/), [TypeScript](https://www.typescriptlang.org/), [jsonschema](https://python-jsonschema.readthedocs.io/)로 만들었습니다.
 - 퍼즐 그림(`bottle_quiz.jpg`)은 ChatGPT로 생성했습니다.
 
 ## 라이선스
