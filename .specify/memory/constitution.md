@@ -13,7 +13,8 @@
 ### II. 기술 스택 고정
 
 - 갈래 1은 Python `realtosim` 패키지로만 구현; 저장소 루트에서 `from realtosim import ...`, `python -m realtosim.<모듈>` MUST.
-- Python 의존성은 `requirements.txt`의 `jsonschema` 외 추가 MUST NOT (TRD §10).
+- Python 의존성은 `requirements.txt`의 `jsonschema`와 `httpx`(`model_api` 전용, 지연 import 유지) 외 추가 MUST NOT (TRD §10).
+- 변경 사유(2026-11-05, v1.3.0): 제출물을 `pip install -r requirements.txt` 한 번으로 에이전트 실행까지 할 수 있게 `httpx==0.28.1`을 허용 목록에 넣는다. `model_api`의 지연 import는 그대로 두어 `httpx` 없이도 테스트가 돈다.
 - 갈래 2 뷰어는 TS + three.js로 구현하고 `tsc` 단일 출력만 쓴다. 허용 패키지는 `three`(벤더 파일 동봉)와 개발 전용 `typescript`·`@types/three`뿐이며, 모두 정확한 버전으로 고정 MUST. 번들러·CDN·외부 URL 사용 MUST NOT.
 - 뷰어는 로컬 서버 없이 `file://`로 연 페이지에서 동작 MUST. ES 모듈 스크립트·importmap, `fetch`·XHR 로컬 파일 읽기, 로컬 사진의 WebGL 텍스처 사용에 의존 MUST NOT. 구체 로딩 방식은 002 plan에서 정한다.
 - Muse Spark 호출은 `realtosim/model_api.py`에서 `httpx`로만; 모델명·키는 환경 변수(`MODEL_API_*`, `SAM_MODEL`)로만 MUST.
@@ -42,4 +43,4 @@
 - 버전 규칙: MAJOR는 원칙 삭제·재정의 등 호환 불가 변경, MINOR은 원칙·섹션 추가나 실질 확장, PATCH는 문구·오탈자 등 비의미 정정.
 - 모든 변경은 준수 확인을 거친다: 테스트 게이트 통과, 원칙 II 허용 목록 외 신규 의존성 없음, 비밀·노출 금지 필드 없음.
 
-**Version**: 1.2.0 | **Ratified**: 2026-11-03 | **Last Amended**: 2026-11-04
+**Version**: 1.3.0 | **Ratified**: 2026-11-03 | **Last Amended**: 2026-11-05

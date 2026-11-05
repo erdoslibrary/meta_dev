@@ -1,0 +1,145 @@
+# Real-to-Sim Archive ![Status](https://img.shields.io/badge/status-hackathon%20prototype-orange)
+
+[English](README.md) | **한국어**
+
+> 로봇 분야의 real-to-sim 방식을 실제 건물에 놓인 퍼즐에 적용해 본 작은 실험입니다.
+
+### 왜 만들었나
+
+로봇 분야의 real-to-sim은 실제 환경을 시뮬레이션으로 옮겨, 실제 하드웨어에서 돌리기 전에 그 안에서 동작을 먼저 시험하는 방식입니다. 같은 방식을 공간에 놓인 퍼즐에도 쓸 수 있을지 궁금했습니다. 그래서 건물의 한 층을 단순한 평면도로 옮기고, 퍼즐을 하나 만들어, 무작위 페르소나의 AI 에이전트에게 풀게 했습니다.
+
+이동, 답, 그 이유가 모두 로그에 남고, Archive가 이를 지도 위에서 재생합니다. 답의 패턴을 보면 퍼즐이 만든 사람에게만 자연스러운 곳(지식의 저주)이 드러나는지 보고 싶었습니다. 에이전트가 통계적으로 사람을 닮았다고 주장하지는 않습니다.
+
+---
+
+## 빠른 시작
+
+1~3단계와 5단계는 API 키나 `.env` 파일 없이 동작합니다. 키가 필요한 건 4단계뿐입니다.
+
+### 1. Archive 뷰어 열기 (빌드 불필요)
+
+`viewer/dist/`가 커밋돼 있습니다. 브라우저로 `viewer/index.html`을 엽니다. URL 끝에 `?lang=ko`를 붙이면 한국어로 나옵니다.
+
+### 2. 설치와 테스트 실행
+
+Python 3.13에서 확인했습니다.
+
+```bash
+python3 -m venv .venv
+.venv/bin/pip install -r requirements.txt   # jsonschema, httpx
+.venv/bin/python -m unittest discover tests -v
+```
+
+### 3. 키 없이 Studio 실행
+
+```bash
+.venv/bin/python -m realtosim.validate drunkard-set        # 퍼즐 세트 검증
+.venv/bin/python -m realtosim.oracle drunkard-set          # 정답 경로 실행, logs/drunkard-set/oracle/r0.json을 다시 씀
+.venv/bin/python -m realtosim.report drunkard-set --no-llm # 로그로 reports/drunkard-set/ 다시 생성
+```
+
+### 4. 에이전트 새로 실행 (모델 API 키 필요)
+
+모델을 호출하는 건 `realtosim.run_agents`뿐입니다. 키가 없으면 `MODEL_API_KEY이 없습니다`를 출력하고 멈춥니다. `.env`는 git에서 제외돼 있습니다. 키를 커밋하지 마세요.
+
+```bash
+cp .env.example .env   # 그다음 .env에 MODEL_API_KEY를 채움
+.venv/bin/python -m realtosim.run_agents drunkard-set --start 13 --runs 5   # r14~r18 생성
+```
+
+`run_agents`는 기존 로그를 덮어쓰지 않습니다. `--start 13` 없이 실행하면 `덮어쓰기 거부: logs/drunkard-set/r01.json`을 출력하고 멈춥니다.
+
+### 5. Archive 다시 빌드 (로그를 새로 만든 뒤)
+
+> [!IMPORTANT]
+> **Node 24**를 사용하세요(`node -v`). 이전 버전(예: 12)에서는 `tsc`가 `SyntaxError: Unexpected token '?'`로 실패합니다.
+
+```bash
+cd viewer && npm ci && cd ..                  # three 0.185.0, typescript 5.9.3, @types/three 0.185.0
+.venv/bin/python viewer/tools/embed.py        # 로그 + 데이터 -> viewer/dist/data.js
+viewer/node_modules/.bin/tsc -p viewer        # src/*.ts -> viewer/dist/app.js
+```
+
+---
+
+## 퍼즐
+
+퍼즐을 하나(`drunkard-set`) 만들어 페르소나에게 풀게 해 봤습니다. 참가자는 건물 3층 `A1`에서 시작해 `C4`의 안내판을 확인하라는 지시를 받습니다. 그곳에서 술꾼이 말을 걸고 이 그림을 보여 줍니다.
+
+<img src="data/drunkard-set/puzzles/bottle_quiz.jpg" alt="병 퍼즐" width="280">
+
+**문제:** 술꾼이 말한 놀이를 풀어 다음으로 가야 할 장소를 답하세요. (6글자, 기회 5번, 2번 틀리면 힌트 하나)
+
+힌트가 담긴 대사로는 "술을 마시면 부끄러워지고, 부끄러우니 술을 마시고...", "내가 이미 얘기하지 않았나?", "다시 돌고\~ 돌고\~" 하는 노래가 있습니다. 전체 데이터는 `data/drunkard-set/puzzle.json`에 있습니다.
+
+<details>
+<summary><b>풀이 (스포일러)</b></summary>
+
+놀이는 끝말잇기입니다. 숫자 1이 붙은 병에서 시작해 끝 글자를 다음 병의 첫 글자로 이으면 STEP → PARI → INFER → ROSA → ANGEL → LIGHT가 됩니다. 빨간 첫 글자를 읽으면 **SPIRAL**입니다. 정답은 `SPIRAL`이라는 단어이고, 다음 장소의 이름입니다.
+
+</details>
+
+---
+
+## 로그에서 본 것
+
+무작위 페르소나(`age`, `job`, `vocab`, `thinking`)로 13회 실행했습니다. 전체 수치는 `reports/drunkard-set/report.md`에 있습니다.
+
+<details>
+<summary><b>자세히 보기 (스포일러)</b></summary>
+
+- 13회 중 12회가 풀었습니다. 오답 24개 중 23개가 계단이나 나선 장소였습니다.
+- 에이전트는 대부분 SPIRAL이라는 단어를 찾고도 "나선형계단앞"처럼 장소로 답했습니다. `r07`은 끝말잇기 사슬을 끝까지 풀고도 네 번 이렇게 답했습니다.
+- 오프라인 참가자는 그보다 앞 단계인 끝말잇기 규칙에서 막혔습니다.
+
+저희가 의도한 답은 장소 이름인 SPIRAL 자체였습니다. 이 패턴은 퍼즐의 지식의 저주일 수도 있고, 아래의 언어 설정 탓일 수도 있습니다. 로그만으로는 어느 쪽인지 알 수 없습니다. 모든 실행은 뷰어에서 재생해 볼 수 있습니다.
+
+</details>
+
+### 한계와 어려웠던 점
+
+- 에이전트가 실행마다 비슷한 답을 냈습니다. 페르소나에 따른 차이가 뚜렷하게 보이지 않았습니다.
+- 한국어와 영어를 제대로 분리하지 못했습니다. 프롬프트와 질문은 한국어인데 정답은 영어 단어이고 문자열 정확 일치로 채점합니다. 오답 24개 중 16개는 `reason`에 이미 정답 단어가 있었지만 한국어로 제출해서 오답 처리됐습니다.
+- 원래는 Modal에서 SAM을 돌려 사진으로 평면도를 만들 계획이었고, SAM 3.1 접근까지는 시험했지만(`test_sam.py`) 시간이 부족했습니다. 지금 평면도는 손으로 썼습니다. 루트의 `test.py`와 `test_sam.py`가 이 Modal 실험이며, `requirements.txt`에 없는 패키지가 필요하고 파이프라인에는 포함되지 않습니다.
+- 실행 한 번에 10분 정도가 걸렸고, 이를 줄일 방법은 찾지 못했습니다.
+
+---
+
+## Studio와 Archive
+
+- Studio(`realtosim/`)는 퍼즐 세트를 검증하고, 페르소나 에이전트를 실행하고, 로그를 쓰고, 보고서를 만듭니다.
+- Archive(`viewer/`)는 Studio 안에서 결과를 재생하는 부분입니다. 평면도 위에 발자국, 참가자의 고스트, 대사와 답을 보여 줍니다. 정적 HTML이라 `file://`로 오프라인에서 열립니다.
+
+```mermaid
+flowchart LR
+    subgraph Studio ["Studio (realtosim/)"]
+        D["data/&lt;set&gt;/"] --> V["validate"]
+        D --> O["oracle"]
+        D --> R["run_agents"]
+        O --> L["logs/&lt;set&gt;/"]
+        R --> L
+        L --> P["report"] --> Rep["reports/&lt;set&gt;/"]
+    end
+    L --> E["viewer/tools/embed.py"]
+    D --> E
+    subgraph Archive ["Archive (viewer/)"]
+        E --> DJ["dist/data.js"] --> UI["index.html"]
+    end
+```
+
+---
+
+## 출처와 고지
+
+- "Don't Panic"(랜딩 화면)과 "So long, and thanks for all the fish"(완주한 재생 끝과 이 README 끝)는 더글러스 애덤스의 《은하수를 여행하는 히치하이커를 위한 안내서》에서 짧은 문구만 오마주로 가져왔습니다. 책의 다른 본문, 표지, 디자인은 쓰지 않았습니다.
+- `meta-models/legal-agent-workshop`은 아이디어(Files API와 SHA-256 캐시, 코드 밖 검증)만 참고했습니다. 코드는 가져오지 않았습니다.
+- [three.js](https://threejs.org/), [TypeScript](https://www.typescriptlang.org/), [jsonschema](https://python-jsonschema.readthedocs.io/)로 만들었습니다.
+- 퍼즐 그림(`bottle_quiz.jpg`)은 ChatGPT로 생성했습니다.
+
+## 라이선스
+
+이 프로젝트는 [MIT 라이선스](LICENSE)를 따릅니다.
+
+---
+
+<div align="center"><i>So long, and thanks for all the fish.</i></div>

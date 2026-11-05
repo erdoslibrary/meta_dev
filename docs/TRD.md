@@ -188,7 +188,8 @@
 
 이 절이 기준이다.
 
-- `model_api`만 Muse Spark를 직접 호출한다. `httpx` 사용(`requirements.txt` 밖, 지연 import).
+- `model_api`만 Muse Spark를 직접 호출한다. `httpx` 사용(`requirements.txt`에 고정, 지연 import 유지).
+- 변경 사유(2026-11-05): 헌법 v1.3.0. 제출물을 `requirements.txt` 한 번으로 설치할 수 있게 `httpx`를 넣는다.
 - 모델명: `MODEL_API_MODEL`(기본 `muse-spark-1.3`), `SAM_MODEL`(기본 `sam-3.1`).
 - `make_client`: `MODEL_API_KEY`, `MODEL_API_BASE_URL`(기본 `https://api.meta.ai/v1`) 필요. 없으면 `MissingKeyError`.
 - `respond`: `POST {base}/responses`. 출력 텍스트는 `output[type=message]/content[type=output_text]`에서 모은다. 없으면 `""`.
@@ -257,8 +258,9 @@ Muse가 맡는다(점수에 영향 없음):
 
 - 모델 없이 표본(`docs/schemas/examples/valid/`)으로 엔진 검사. `model_api`는 `MockTransport`로 검사.
 - 거절 메시지는 §4 문장과 정확히 일치해야 한다.
-- 새 패키지 추가 금지. Python은 `requirements.txt`의 `jsonschema` 외 추가 없음. 뷰어는 `three`, `typescript`, `@types/three`만 정확한 버전으로 허용.
+- 새 패키지 추가 금지. Python은 `requirements.txt`의 `jsonschema`, `httpx` 외 추가 없음. 뷰어는 `three`, `typescript`, `@types/three`만 정확한 버전으로 허용.
 - 변경 사유(2026-11-04): 헌법 v1.2.0 원칙 II의 뷰어 허용 목록 반영.
+- 변경 사유(2026-11-05): 헌법 v1.3.0 원칙 II에 `httpx` 추가 반영.
 - 확인: `python -m unittest discover tests -v`.
 
 엔진 시나리오(#1~#16, #18~#23, #28, #29):

@@ -36,7 +36,8 @@ Real-to-Sim 공간 퍼즐 스튜디오의 핵심 검증 흐름을 만든다.
 - GPU 작업은 Modal. 크레딧 100달러.
 - Muse Code로 구현. 제출물 모델은 Meta 모델.
 - `meta-models/legal-agent-workshop`은 SAM 노하우, Files API + SHA-256 캐시, 코드 밖 검증 구조만 참고. 코드 반입 없음.
-- 새 패키지 추가 금지. Python은 `jsonschema` 외 추가 없음. 뷰어는 `three`, `typescript`, `@types/three`만 정확한 버전으로 허용(헌법 원칙 II).
+- 새 패키지 추가 금지. Python은 `jsonschema`, `httpx` 외 추가 없음. 뷰어는 `three`, `typescript`, `@types/three`만 정확한 버전으로 허용(헌법 원칙 II).
+- 변경 사유(2026-11-05): 헌법 v1.3.0. 제출물 실행 편의를 위해 `httpx`를 `requirements.txt`에 넣는다.
 - 변경 사유(2026-11-04): 헌법 v1.2.0 원칙 II의 뷰어 허용 목록 반영.
 - 엔진은 순수 상태 머신. 모델, 파일, 네트워크 접근 없음. 무작위성 없음.
 
