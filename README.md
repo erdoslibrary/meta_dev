@@ -1,4 +1,5 @@
 <!-- 2026-11-05 변경 사유: GitHub Actions(CI + Pages) 배포 전환을 README에 반영. -->
+<!-- 2026-11-07 변경 사유: 앞단 Photo-to-Sim 비전, 마루더즈 맵 로드맵, docs/photo-to-sim-vision.md 링크 추가. -->
 # Real-to-Sim Archive ![Status](https://img.shields.io/badge/status-hackathon%20prototype-orange) [![Archive CI + Pages](https://github.com/erdoslibrary/meta_hackathon/actions/workflows/pages.yml/badge.svg)](https://github.com/erdoslibrary/meta_hackathon/actions/workflows/pages.yml)
 
 **English** | [한국어](README.ko.md)
@@ -14,6 +15,38 @@
 In robotics, real-to-sim means bringing a real environment into simulation and testing a behavior there before it runs on real hardware. We wondered whether the same approach could work for a puzzle placed in a space. So we put one floor of a building into a simple floor plan, made one puzzle, and let AI agents with random personas play it.
 
 Every move, answer and reason goes into a log, and the Archive replays it on the map. We wanted to see whether the answer patterns show where a puzzle only makes sense to its maker (the curse of knowledge). We do not claim the agents behave like people statistically.
+
+### 🗺️ Project Vision: "2D Floor Plan + Marauder's Map"
+
+We didn't need 3D. Like MuJoCo simplifying shapes into boxes and capsules for fast physics, a flat 2D floor plan with a *Harry Potter Marauder's Map* feel is all a spatial puzzle needs.
+
+The original goal was simple: sketch a room with a mouse, snap a photo of a door to set the scale, drop in a few clues, and turn a real place into a simulation in minutes.
+
+With limited hackathon time, we built the back half first: running the persona agents and replaying their footprints.
+
+```mermaid
+flowchart LR
+    subgraph Frontend ["Frontend: Photo-to-Sim Studio (To-Do)"]
+        A["1. 2D Sketching"] --> B["2. Door Photo Scale Check"]
+        B --> C["3. Object Cutout & Placement"]
+    end
+    subgraph Backend ["Backend: Simulation & Archive (Done)"]
+        C --> D["4. Persona Agent Run"]
+        D --> E["5. Marauder's Map Replay"]
+    end
+    style Frontend stroke-dasharray: 5 5
+```
+
+#### Status & What's Left
+- **Done (Backend & Archive)**:
+  - `realtosim/`: AI agents explore the space, inspect photo clues, and log their reasoning.
+  - `viewer/`: Marauder's Map style viewer replaying footprints and persona ghosts on the floor plan.
+- **To-Do (Photo-to-Sim Studio)**:
+  - Web canvas for mouse-sketching walls and rooms.
+  - Automatic scale calibration from door photos via Modal (SAM 3.1) and Muse Spark.
+  - Object photo cutout and drag-and-drop placement.
+
+See [docs/photo-to-sim-vision.md](docs/photo-to-sim-vision.md) for architecture notes and technical design.
 
 ---
 
