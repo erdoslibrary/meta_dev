@@ -1,4 +1,6 @@
 <!-- 2026-11-05 변경 사유: GitHub Actions(CI + Pages) 배포 전환을 README에 반영. -->
+<!-- 2026-11-07 변경 사유: 앞단 Photo-to-Sim 비전, 마루더즈 맵 로드맵, docs/photo-to-sim-vision.md 링크 추가. -->
+<!-- 2026-11-07 변경 사유: 빠른 시작 전 해커톤 개발 이미지 추가. -->
 # Real-to-Sim Archive ![Status](https://img.shields.io/badge/status-hackathon%20prototype-orange) [![Archive CI + Pages](https://github.com/erdoslibrary/meta_hackathon/actions/workflows/pages.yml/badge.svg)](https://github.com/erdoslibrary/meta_hackathon/actions/workflows/pages.yml)
 
 [English](README.md) | **한국어**
@@ -14,6 +16,40 @@
 로봇 분야의 real-to-sim은 실제 환경을 시뮬레이션으로 옮겨, 실제 하드웨어에서 돌리기 전에 그 안에서 동작을 먼저 시험하는 방식입니다. 같은 방식을 공간에 놓인 퍼즐에도 쓸 수 있을지 궁금했습니다. 그래서 건물의 한 층을 단순한 평면도로 옮기고, 퍼즐을 하나 만들어, 무작위 페르소나의 AI 에이전트에게 풀게 했습니다.
 
 이동, 답, 그 이유가 모두 로그에 남고, Archive가 이를 지도 위에서 재생합니다. 답의 패턴을 보면 퍼즐이 만든 사람에게만 자연스러운 곳(지식의 저주)이 드러나는지 보고 싶었습니다. 에이전트가 통계적으로 사람을 닮았다고 주장하지는 않습니다.
+
+### 🗺️ 프로젝트 비전: "2D 평면 + 해리포터 마루더즈 맵"
+
+현실 공간을 가상화할 때 무거운 3D 스캔은 불필요하다고 생각했습니다. MuJoCo 물리 엔진이 단순 기하 도형으로 충돌을 최적화하듯, **단순화된 2D 평면과 해리포터 '마루더즈 맵'의 발자국 연출**로 충분합니다.
+
+본 프로젝트의 원래 구상은 **"누구나 사진과 마우스 드로잉으로 현실 공간을 가상화해 시뮬레이션하는 도구"** 입니다. 해커톤에서는 뒷단 시뮬레이션 및 아카이브 뷰어를 우선 구현했습니다.
+
+```mermaid
+flowchart LR
+    subgraph Frontend ["앞단: Photo-to-Sim 저작 도구 (To-Do)"]
+        A["1. 마우스 도면 드로잉"] --> B["2. 출입문 사진 축척 보정"]
+        B --> C["3. 사물 사진 누끼 & 배치"]
+    end
+    subgraph Backend ["뒷단: 시뮬레이션 & 아카이브 (구현 완료)"]
+        C --> D["4. 페르소나 에이전트 실행"]
+        D --> E["5. 마루더즈 맵 뷰어 재생"]
+    end
+    style Frontend stroke-dasharray: 5 5
+```
+
+#### 구현 현황 및 로드맵
+- **[완료] 시뮬레이션 엔진 & 아카이브 뷰어**:
+  - `realtosim/`: 페르소나 에이전트가 공간을 탐색하고 사진 단서를 풀어 로그를 기록.
+  - `viewer/`: 웹 브라우저에서 평면도 위 발자국과 고스트를 재생하는 마루더즈 맵 뷰어.
+- **[To-Do] Photo-to-Sim 저작 스튜디오**:
+  - 마우스 2D 도면 스케치 및 방 구역 지정 UI.
+  - Modal(SAM 3.1) + Muse Spark를 활용한 출입문 사진 기반 도면 축척(Scale) 자동 검증.
+  - 사물 사진 자동 배경 투명화 및 드래그 앤 드롭 팔레트.
+
+자세한 비전과 기술 설계는 [docs/photo-to-sim-vision.md](docs/photo-to-sim-vision.md)를 참고하세요.
+
+<p align="center">
+  <img src="docs/assets/dev-frog.png" alt="해커톤 개발 중" width="600" />
+</p>
 
 ---
 
