@@ -1,11 +1,19 @@
+<!-- 2026-11-07 변경 사유: 초기 구현 완료 작업(AGENTS.md 및 game_engine.py 생성)을 과거 기록으로 명시하여 재구현 방지. -->
+# 초기 진행 기록 (완료)
+
+> [!NOTE]
+> 아래 1번과 2번 항목은 프로젝트 초기에 이미 완료된 작업 기록입니다. `AGENTS.md` 및 `realtosim/game_engine.py`는 이미 구현되어 있으므로 덮어쓰거나 다시 작성하지 않고 기존 파일을 보존합니다.
+
+## [완료] 초기 프롬프트 및 구현 지침
+
 docs/PRD.md, docs/TRD.md, requirement.md, docs/schemas/를 읽고 아래 두 가지만 하세요.
 
-1. 저장소 루트에 AGENTS.md를 만드세요. TRD §11의 "Muse Code 지침 파일" 계획대로 읽을 문서와 지켜야 할 규칙을 짧게 적습니다. (meta 만의 검증 후 만들 예정)
+1. [완료] 저장소 루트에 AGENTS.md를 만드세요. TRD §11의 "Muse Code 지침 파일" 계획대로 읽을 문서와 지켜야 할 규칙을 짧게 적습니다. (meta 만의 검증 후 만들 예정)
 
 - tdd, sdd 언제 넣지?
 
 
-2. realtosim/game_engine.py를 TRD §3, §4대로 구현하고, tests/test_game_engine.py를 작성하세요.
+2. [완료] realtosim/game_engine.py를 TRD §3, §4대로 구현하고, tests/test_game_engine.py를 작성하세요.
 - 엔진은 순수 상태 머신입니다. 모델, 파일, 네트워크에 접근하지 않고 무작위성도 없습니다.
 - 테스트 입력은 docs/schemas/examples/valid/의 표본입니다.
 - 테스트 범위는 TRD §10의 #1~#29, 노출 검사, 로그 검사입니다.
@@ -19,6 +27,7 @@ docs/PRD.md, docs/TRD.md, requirement.md, docs/schemas/를 읽고 아래 두 가
 
 끝나면 python -m unittest discover tests -v를 실행하세요. 바꾼 파일, 테스트 결과, 통과하지 못한 항목을 보고하고 멈추세요.
 
+---
 
 # 퍼즐 데이터
 실제 퍼즐 데이터 주는 방법

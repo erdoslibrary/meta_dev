@@ -33,15 +33,16 @@
 
 - 새 Phase·기능 요청 시 바로 코드 작성 MUST NOT. `specs/<id>/`에 spec.md → plan.md → tasks.md → implement 순서 MUST.
 - 범위 기준(SSOT)은 저장소 루트 `requirement.md` 최우선, 원본은 `docs/PRD.md`·`docs/TRD.md` MUST.
-- 변경 사유(2026-11-05, v1.3.1): `docs/PRD.md`·`docs/TRD.md`는 2026-11-05 삭제했고 `backup/pre-docs-cleanup` 브랜치에 보존한다. 위 원본 언급은 그 브랜치의 문서를 가리킨다. 워크플로우 세부 동작은 `.specify/workflows/speckit/`을 따른다.
+- 변경 사유(2026-11-05, v1.3.1): `docs/PRD.md`·`docs/TRD.md`는 2026-11-05 삭제했고 `backup/pre-docs-cleanup` 브랜치에 보존한다. 위 원본 언급은 그 브랜치의 문서를 가리킨다.
+- 변경 사유(2026-11-07, v1.3.2): 지속 개발 및 향후 비전 설계를 위해 `docs/PRD.md`·`docs/TRD.md`를 복원하고 `docs/` 비전 문서 추가를 허용한다. 워크플로우 세부 동작은 `.specify/workflows/speckit/`을 따른다.
 - `/speckit-implement` 전 `tasks.md` 범위를 요청과 대조하고, 요청이 제외·다음 슬라이스로 적혀 있으면 `tasks` 재생성 여부를 먼저 묻 MUST.
 - 본 헌법 개정 없이 `docs/`·스키마 수정 MUST NOT.
 
 ## Governance
 
 - 본 헌법의 금지 조항이 다른 관행보다 우선한다. 그 외 충돌 시 PRD(WHAT/WHY) > TRD §3~§10(HOW) > 스키마 예시 순으로 따른다.
-- 개정은 본 파일 수정 + 버전 증가 + 날짜 갱신으로만 한다. 개정 제안은 이유와 영향 범위를 함께 기록한다.
+- 개정은 본 파일 수정 + 버전 증가 + 날짜 갱신으로만 한다. 개정 제안은 이유와 영향 범위를 함께 기록한다. (v1.3.2 개정 이유: 지속 개발을 위한 PRD/TRD 복원 및 비전 문서 수용. 영향 범위: docs/ 내 복원 및 신규 문서 승인)
 - 버전 규칙: MAJOR는 원칙 삭제·재정의 등 호환 불가 변경, MINOR은 원칙·섹션 추가나 실질 확장, PATCH는 문구·오탈자 등 비의미 정정.
 - 모든 변경은 준수 확인을 거친다: 테스트 게이트 통과, 원칙 II 허용 목록 외 신규 의존성 없음, 비밀·노출 금지 필드 없음.
 
-**Version**: 1.3.1 | **Ratified**: 2026-11-03 | **Last Amended**: 2026-11-05
+**Version**: 1.3.2 | **Ratified**: 2026-11-03 | **Last Amended**: 2026-11-07
