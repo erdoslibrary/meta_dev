@@ -1,5 +1,6 @@
 <!-- 2026-11-05 변경 사유: GitHub Actions(CI + Pages) 배포 전환을 README에 반영. -->
 <!-- 2026-11-07 변경 사유: 앞단 Photo-to-Sim 비전, 마루더즈 맵 로드맵, docs/photo-to-sim-vision.md 링크 추가. -->
+<!-- 2026-11-07 변경 사유: 빠른 시작 전 해커톤 개발 이미지 추가. -->
 # Real-to-Sim Archive ![Status](https://img.shields.io/badge/status-hackathon%20prototype-orange) [![Archive CI + Pages](https://github.com/erdoslibrary/meta_hackathon/actions/workflows/pages.yml/badge.svg)](https://github.com/erdoslibrary/meta_hackathon/actions/workflows/pages.yml)
 
 **English** | [한국어](README.ko.md)
@@ -47,6 +48,10 @@ flowchart LR
   - Object photo cutout and drag-and-drop placement.
 
 See [docs/photo-to-sim-vision.md](docs/photo-to-sim-vision.md) for architecture notes and technical design.
+
+<p align="center">
+  <img src="docs/assets/dev-frog.png" alt="Hackathon late-night dev" width="600" />
+</p>
 
 ---
 

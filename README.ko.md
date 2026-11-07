@@ -1,5 +1,6 @@
 <!-- 2026-11-05 변경 사유: GitHub Actions(CI + Pages) 배포 전환을 README에 반영. -->
 <!-- 2026-11-07 변경 사유: 앞단 Photo-to-Sim 비전, 마루더즈 맵 로드맵, docs/photo-to-sim-vision.md 링크 추가. -->
+<!-- 2026-11-07 변경 사유: 빠른 시작 전 해커톤 개발 이미지 추가. -->
 # Real-to-Sim Archive ![Status](https://img.shields.io/badge/status-hackathon%20prototype-orange) [![Archive CI + Pages](https://github.com/erdoslibrary/meta_hackathon/actions/workflows/pages.yml/badge.svg)](https://github.com/erdoslibrary/meta_hackathon/actions/workflows/pages.yml)
 
 [English](README.md) | **한국어**
@@ -20,7 +21,7 @@
 
 현실 공간을 가상화할 때 무거운 3D 스캔은 불필요하다고 생각했습니다. MuJoCo 물리 엔진이 단순 기하 도형으로 충돌을 최적화하듯, **단순화된 2D 평면과 해리포터 '마루더즈 맵'의 발자국 연출**로 충분합니다.
 
-본 프로젝트의 원래 구상은 **"누구나 사진과 마우스 드로잉으로 현실 공간을 가상화해 시뮬레이션하는 도구"**입니다. 해커톤에서는 뒷단 시뮬레이션 및 아카이브 뷰어를 우선 구현했습니다.
+본 프로젝트의 원래 구상은 **"누구나 사진과 마우스 드로잉으로 현실 공간을 가상화해 시뮬레이션하는 도구"** 입니다. 해커톤에서는 뒷단 시뮬레이션 및 아카이브 뷰어를 우선 구현했습니다.
 
 ```mermaid
 flowchart LR
@@ -45,6 +46,10 @@ flowchart LR
   - 사물 사진 자동 배경 투명화 및 드래그 앤 드롭 팔레트.
 
 자세한 비전과 기술 설계는 [docs/photo-to-sim-vision.md](docs/photo-to-sim-vision.md)를 참고하세요.
+
+<p align="center">
+  <img src="docs/assets/dev-frog.png" alt="해커톤 개발 중" width="600" />
+</p>
 
 ---
 
